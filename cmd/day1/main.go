@@ -8,6 +8,8 @@ import (
 	"github.com/chigley/advent2019"
 )
 
+type fuelFunc func(mass int) (fuel int)
+
 func main() {
 	masses, err := advent2019.ReadInts(os.Stdin)
 	if err != nil {
@@ -15,16 +17,33 @@ func main() {
 	}
 
 	fmt.Println(part1(masses))
+	fmt.Println(part2(masses))
 }
 
-func part1(masses []int) int {
+func totalFuel(masses []int, f fuelFunc) int {
 	var totalFuel int
 	for _, m := range masses {
-		totalFuel += fuel(m)
+		totalFuel += f(m)
 	}
 	return totalFuel
 }
 
+func part1(masses []int) int {
+	return totalFuel(masses, fuel)
+}
+
+func part2(masses []int) int {
+	return totalFuel(masses, fuelRecursive)
+}
+
 func fuel(mass int) int {
 	return mass/3 - 2
+}
+
+func fuelRecursive(mass int) int {
+	totalFuel := fuel(mass)
+	for extra := fuel(totalFuel); extra > 0; extra = fuel(extra) {
+		totalFuel += extra
+	}
+	return totalFuel
 }
