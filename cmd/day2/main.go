@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -18,7 +19,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	noun, verb, err := findInputs(program, 19690720)
+	if err != nil {
+		log.Fatal(err)
+	}
+	part2 := 100*noun + verb
+
 	fmt.Println(part1)
+	fmt.Println(part2)
 }
 
 func evaluate(program []int, noun, verb int) (int, error) {
@@ -38,4 +47,19 @@ func evaluate(program []int, noun, verb int) (int, error) {
 	}
 
 	return comp.read(0)
+}
+
+func findInputs(program []int, target int) (int, int, error) {
+	for noun := 0; noun < 100; noun++ {
+		for verb := 0; verb < 100; verb++ {
+			result, err := evaluate(program, noun, verb)
+			if err != nil {
+				return 0, 0, err
+			}
+			if result == target {
+				return noun, verb, nil
+			}
+		}
+	}
+	return 0, 0, errors.New("no suitable noun/verb combination found")
 }
