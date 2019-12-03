@@ -49,3 +49,9 @@ func ReadIntsLine(r io.Reader) ([]int, error) {
 
 	return vals, nil
 }
+
+func ReadCSV(r io.Reader) ([][]string, error) {
+	reader := csv.NewReader(r)
+	reader.FieldsPerRecord = -1
+	return reader.ReadAll()
+}
