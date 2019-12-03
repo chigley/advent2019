@@ -21,11 +21,12 @@ type point struct {
 
 type (
 	distance int
+	numSteps int
 
 	wireID int
 
 	visitedPoints map[point]wireSet
-	wireSet       map[wireID]struct{}
+	wireSet       map[wireID]numSteps
 )
 
 func main() {
@@ -34,30 +35,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	part1, err := optimalPoint(wires)
+	part1, part2, err := optimalPoint(wires)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println(part1)
+	fmt.Println(part2)
 }
 
-func optimalPoint(wires [][]string) (distance, error) {
+func optimalPoint(wires [][]string) (distance, numSteps, error) {
 	visited := make(visitedPoints)
 	for i, path := range wires {
 		if err := visited.walkWire(wireID(i), path); err != nil {
-			return 0, err
+			return 0, 0, err
 		}
 	}
 	return visited.optimalPoint()
 }
 
-func (v visitedPoints) optimalPoint() (distance, error) {
+func (v visitedPoints) optimalPoint() (distance, numSteps, error) {
 	var (
 		origin point
 
 		maxVisited  int
 		minDistance distance
+		minSteps    numSteps
 	)
 
 	for point, wires := range v {
@@ -68,28 +71,40 @@ func (v visitedPoints) optimalPoint() (distance, error) {
 
 		dist := origin.distance(point)
 
+		var totalSteps numSteps
+		for _, steps := range wires {
+			totalSteps += steps
+		}
+
 		if len(wires) > maxVisited {
 			// The current point has been visited by more wires than all
 			// previous points. This is our new favourite, no matter how far
 			// away it was.
 			maxVisited = len(wires)
 			minDistance = dist
+			minSteps = totalSteps
 			continue
 		}
 
 		if dist < minDistance {
 			minDistance = dist
 		}
+		if totalSteps < minSteps {
+			minSteps = totalSteps
+		}
 	}
 
 	if maxVisited < 2 {
-		return 0, errors.New("expected to find a point visited by at least two wires")
+		return 0, 0, errors.New("expected to find a point visited by at least two wires")
 	}
-	return minDistance, nil
+	return minDistance, minSteps, nil
 }
 
 func (v visitedPoints) walkWire(id wireID, path []string) error {
-	var pos point
+	var (
+		pos   point
+		steps numSteps
+	)
 	for _, move := range path {
 		if len(move) < 2 {
 			return fmt.Errorf("move %s is too short", move)
@@ -113,15 +128,18 @@ func (v visitedPoints) walkWire(id wireID, path []string) error {
 		for i := 0; i < distance; i++ {
 			pos.x += x
 			pos.y += y
+			steps++
 
 			wires, ok := v[pos]
 			if ok {
-				// A wire has already visited this point. Add ourselves to the
-				// set.
-				wires[id] = struct{}{}
+				// A wire - perhaps ourseves - already visited here. Extend
+				// existing map if it wasn't us.
+				if _, ok2 := wires[id]; !ok2 {
+					wires[id] = steps
+				}
 			} else {
-				// We're the first wire to visit this point.
-				v[pos] = wireSet{id: struct{}{}}
+				// We're the first wire to visit this point. Create new map.
+				v[pos] = wireSet{id: steps}
 			}
 		}
 	}
