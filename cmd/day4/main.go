@@ -16,23 +16,27 @@ func main() {
 	if len(ranges) != 1 {
 		log.Fatal("expected one input range")
 	}
-	input := ranges[0]
 
-	fmt.Println(part1(input))
+	part1, part2 := solve(ranges[0])
+	fmt.Println(part1)
+	fmt.Println(part2)
 }
 
-func part1(input advent2019.Range) (validPasswords int) {
+func solve(input advent2019.Range) (part1, part2 int) {
 	for i := input.From; i <= input.To; i++ {
-		if meetsCriteria(i) {
-			validPasswords++
+		code := fmt.Sprintf("%06d", i)
+		if meetsPart1Criteria(code) {
+			part1++
+
+			if meetsPart2AdditionalCriteria(code) {
+				part2++
+			}
 		}
 	}
 	return
 }
 
-func meetsCriteria(x int) bool {
-	code := fmt.Sprintf("%06d", x)
-
+func meetsPart1Criteria(code string) bool {
 	if !advent2019.StringIsSorted(code) {
 		return false
 	}
@@ -44,6 +48,32 @@ func meetsCriteria(x int) bool {
 		}
 		if r == runes[i-1] {
 			return true
+		}
+	}
+
+	return false
+}
+
+func meetsPart2Criteria(code string) bool {
+	return meetsPart1Criteria(code) && meetsPart2AdditionalCriteria(code)
+}
+
+func meetsPart2AdditionalCriteria(code string) bool {
+	var count int
+
+	runes := []rune(code)
+	for i, r := range runes {
+		if i > 0 && r == runes[i-1] {
+			count++
+
+			if i == len(runes)-1 && count == 2 {
+				return true
+			}
+		} else {
+			if count == 2 {
+				return true
+			}
+			count = 1
 		}
 	}
 
