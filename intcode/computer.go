@@ -28,7 +28,7 @@ const (
 
 var errHalt = errors.New("intcode: halt")
 
-type computer struct {
+type Computer struct {
 	program []int
 
 	memory  []int
@@ -37,13 +37,13 @@ type computer struct {
 	outputs []int
 }
 
-func New(program []int) *computer {
-	return &computer{
+func New(program []int) *Computer {
+	return &Computer{
 		program: program,
 	}
 }
 
-func (c *computer) Run(inputs []int) ([]int, error) {
+func (c *Computer) Run(inputs []int) ([]int, error) {
 	c.memory = append([]int(nil), c.program...)
 	c.pc = 0
 	c.inputs = append([]int(nil), inputs...)
@@ -57,7 +57,7 @@ func (c *computer) Run(inputs []int) ([]int, error) {
 	}
 }
 
-func (c *computer) runOp() error {
+func (c *Computer) runOp() error {
 	instr, err := c.Read(c.pc)
 	if err != nil {
 		return err
@@ -101,14 +101,14 @@ func (c *computer) runOp() error {
 	}
 }
 
-func (c *computer) Read(pos int) (int, error) {
+func (c *Computer) Read(pos int) (int, error) {
 	if pos >= len(c.memory) {
 		return 0, fmt.Errorf("intcode: index %d is out of bounds", pos)
 	}
 	return c.memory[pos], nil
 }
 
-func (c *computer) readPointer(pos int) (int, error) {
+func (c *Computer) readPointer(pos int) (int, error) {
 	i, err := c.Read(pos)
 	if err != nil {
 		return 0, err
@@ -116,7 +116,7 @@ func (c *computer) readPointer(pos int) (int, error) {
 	return c.Read(i)
 }
 
-func (c *computer) write(pos, val int) error {
+func (c *Computer) write(pos, val int) error {
 	if pos >= len(c.memory) {
 		return fmt.Errorf("intcode: index %d is out of bounds", pos)
 	}
@@ -124,7 +124,7 @@ func (c *computer) write(pos, val int) error {
 	return nil
 }
 
-func (c *computer) binaryOp(op opCode, modes []paramMode) error {
+func (c *Computer) binaryOp(op opCode, modes []paramMode) error {
 	if len(modes) != 2 {
 		return fmt.Errorf("intcode: binary op got %d paremeter modes, expected 3", len(modes))
 	}
@@ -155,7 +155,7 @@ func (c *computer) binaryOp(op opCode, modes []paramMode) error {
 	}
 }
 
-func (c *computer) binaryOpWithDest(op opCode, modes []paramMode) error {
+func (c *Computer) binaryOpWithDest(op opCode, modes []paramMode) error {
 	if len(modes) != 2 {
 		return fmt.Errorf("intcode: binary op got %d paremeter modes, expected 3", len(modes))
 	}
@@ -195,7 +195,7 @@ func (c *computer) binaryOpWithDest(op opCode, modes []paramMode) error {
 	}
 }
 
-func (c *computer) unaryOp(op opCode, modes []paramMode) error {
+func (c *Computer) unaryOp(op opCode, modes []paramMode) error {
 	if len(modes) != 1 {
 		return fmt.Errorf("intcode: unary op got %d paremeter modes, expected 1", len(modes))
 	}
@@ -227,7 +227,7 @@ func (c *computer) unaryOp(op opCode, modes []paramMode) error {
 	}
 }
 
-func (c *computer) readArg(mode paramMode) (int, error) {
+func (c *Computer) readArg(mode paramMode) (int, error) {
 	switch mode {
 	case modePosition:
 		arg, err := c.readPointer(c.pc)
