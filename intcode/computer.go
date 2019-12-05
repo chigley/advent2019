@@ -5,12 +5,14 @@ import (
 	"fmt"
 )
 
+type opCode int
+
 const (
-	opAdd    = 1
-	opMult   = 2
-	opInput  = 3
-	opOutput = 4
-	opHalt   = 99
+	opAdd    opCode = 1
+	opMult          = 2
+	opInput         = 3
+	opOutput        = 4
+	opHalt          = 99
 )
 
 var errHalt = errors.New("intcode: halt")
@@ -45,20 +47,22 @@ func (c *computer) Run(inputs []int) ([]int, error) {
 }
 
 func (c *computer) runOp() error {
-	opCode, err := c.Read(c.pc)
+	instr, err := c.Read(c.pc)
 	if err != nil {
 		return err
 	}
 
-	switch opCode {
+	op := opCode(instr)
+
+	switch op {
 	case opAdd, opMult:
-		if err := c.binaryOp(opCode); err != nil {
+		if err := c.binaryOp(op); err != nil {
 			return err
 		}
 		c.pc += 4
 		return nil
 	case opInput, opOutput:
-		if err := c.unaryOp(opCode); err != nil {
+		if err := c.unaryOp(op); err != nil {
 			return err
 		}
 		c.pc += 2
@@ -66,7 +70,7 @@ func (c *computer) runOp() error {
 	case opHalt:
 		return errHalt
 	default:
-		return fmt.Errorf("intcode: invalid op code %d", opCode)
+		return fmt.Errorf("intcode: invalid op code %d", op)
 	}
 }
 
@@ -93,7 +97,7 @@ func (c *computer) write(pos, val int) error {
 	return nil
 }
 
-func (c *computer) binaryOp(opCode int) error {
+func (c *computer) binaryOp(op opCode) error {
 	arg1, err := c.readPointer(c.pc + 1)
 	if err != nil {
 		return err
@@ -109,23 +113,23 @@ func (c *computer) binaryOp(opCode int) error {
 		return err
 	}
 
-	switch opCode {
+	switch op {
 	case opAdd:
 		return c.write(dst, arg1+arg2)
 	case opMult:
 		return c.write(dst, arg1*arg2)
 	default:
-		return fmt.Errorf("intcode: invalid binary op code %d", opCode)
+		return fmt.Errorf("intcode: invalid binary op code %d", op)
 	}
 }
 
-func (c *computer) unaryOp(opCode int) error {
+func (c *computer) unaryOp(op opCode) error {
 	arg, err := c.Read(c.pc + 1)
 	if err != nil {
 		return err
 	}
 
-	switch opCode {
+	switch op {
 	case opInput:
 		if len(c.inputs) == 0 {
 			return errors.New("intcode: input instruction has no input to read")
@@ -143,6 +147,6 @@ func (c *computer) unaryOp(opCode int) error {
 		c.outputs = append(c.outputs, val)
 		return nil
 	default:
-		return fmt.Errorf("intcode: invalid unary op code %d", opCode)
+		return fmt.Errorf("intcode: invalid unary op code %d", op)
 	}
 }
