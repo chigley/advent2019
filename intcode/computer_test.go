@@ -18,9 +18,7 @@ var tests = []struct {
 
 func TestRun(t *testing.T) {
 	for _, tt := range tests {
-		comp := computer{
-			memory: tt.initial,
-		}
+		comp := New(tt.initial)
 		if err := comp.Run(); err != nil {
 			t.Error(err)
 		}

@@ -14,17 +14,20 @@ const (
 var errHalt = errors.New("intcode: halt")
 
 type computer struct {
-	memory []int
-	pc     int
+	program []int
+	memory  []int
+	pc      int
 }
 
 func New(program []int) *computer {
 	return &computer{
-		memory: append([]int(nil), program...),
+		program: program,
 	}
 }
 
 func (c *computer) Run() error {
+	c.memory = append([]int(nil), c.program...)
+	c.pc = 0
 	for {
 		if err := c.runOp(); err == errHalt {
 			return nil
