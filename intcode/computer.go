@@ -8,11 +8,15 @@ import (
 type opCode int
 
 const (
-	opAdd    opCode = 1
-	opMult          = 2
-	opInput         = 3
-	opOutput        = 4
-	opHalt          = 99
+	opAdd         opCode = 1
+	opMult               = 2
+	opInput              = 3
+	opOutput             = 4
+	opJumpIfTrue         = 5
+	opJumpIfFalse        = 6
+	opLessThan           = 7
+	opEquals             = 8
+	opHalt               = 99
 )
 
 type paramMode int
@@ -63,7 +67,16 @@ func (c *computer) runOp() error {
 	op, encodedModes := separateInstr(instr)
 
 	switch op {
-	case opAdd, opMult:
+	case opJumpIfTrue, opJumpIfFalse:
+		modes, err := decodeModes(encodedModes, 2)
+		if err != nil {
+			return err
+		}
+		if err := c.binaryOp(op, modes); err != nil {
+			return err
+		}
+		return nil
+	case opAdd, opMult, opLessThan, opEquals:
 		modes, err := decodeModes(encodedModes, 2)
 		if err != nil {
 			return err
@@ -111,6 +124,37 @@ func (c *computer) write(pos, val int) error {
 	return nil
 }
 
+func (c *computer) binaryOp(op opCode, modes []paramMode) error {
+	if len(modes) != 2 {
+		return fmt.Errorf("intcode: binary op got %d paremeter modes, expected 3", len(modes))
+	}
+
+	arg1, err := c.readArg(modes[0])
+	if err != nil {
+		return err
+	}
+
+	arg2, err := c.readArg(modes[1])
+	if err != nil {
+		return err
+	}
+
+	switch op {
+	case opJumpIfTrue:
+		if arg1 != 0 {
+			c.pc = arg2
+		}
+		return nil
+	case opJumpIfFalse:
+		if arg1 == 0 {
+			c.pc = arg2
+		}
+		return nil
+	default:
+		return fmt.Errorf("intcode: invalid binary op code %d", op)
+	}
+}
+
 func (c *computer) binaryOpWithDest(op opCode, modes []paramMode) error {
 	if len(modes) != 2 {
 		return fmt.Errorf("intcode: binary op got %d paremeter modes, expected 3", len(modes))
@@ -136,6 +180,16 @@ func (c *computer) binaryOpWithDest(op opCode, modes []paramMode) error {
 		return c.write(dst, arg1+arg2)
 	case opMult:
 		return c.write(dst, arg1*arg2)
+	case opLessThan:
+		if arg1 < arg2 {
+			return c.write(dst, 1)
+		}
+		return c.write(dst, 0)
+	case opEquals:
+		if arg1 == arg2 {
+			return c.write(dst, 1)
+		}
+		return c.write(dst, 0)
 	default:
 		return fmt.Errorf("intcode: invalid binary op code %d", op)
 	}
