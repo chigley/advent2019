@@ -68,7 +68,7 @@ func (c *computer) runOp() error {
 		if err != nil {
 			return err
 		}
-		if err := c.binaryOp(op, modes); err != nil {
+		if err := c.binaryOpWithDest(op, modes); err != nil {
 			return err
 		}
 		return nil
@@ -111,7 +111,7 @@ func (c *computer) write(pos, val int) error {
 	return nil
 }
 
-func (c *computer) binaryOp(op opCode, modes []paramMode) error {
+func (c *computer) binaryOpWithDest(op opCode, modes []paramMode) error {
 	if len(modes) != 2 {
 		return fmt.Errorf("intcode: binary op got %d paremeter modes, expected 3", len(modes))
 	}
