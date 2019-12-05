@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -17,27 +18,43 @@ func main() {
 
 	comp := intcode.New(program)
 
+	part1, err := computePart1(comp)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	part2, err := computePart2(comp)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(part1)
+	fmt.Println(part2)
+}
+
+func computePart1(comp *intcode.Computer) (int, error) {
 	outputs, err := comp.Run([]int{1})
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(outputs) == 0 {
+		return 0, errors.New("got no outputs")
+	}
 	for i, out := range outputs {
 		if i != len(outputs)-1 && out != 0 {
-			log.Fatal("got a non-zero output before the end")
+			return 0, errors.New("got a non-zero output before the end")
 		}
 	}
-	part1 := outputs[len(outputs)-1]
+	return outputs[len(outputs)-1], nil
+}
 
-	outputs, err = comp.Run([]int{5})
+func computePart2(comp *intcode.Computer) (int, error) {
+	outputs, err := comp.Run([]int{5})
 	if err != nil {
-		log.Fatal(err)
+		return 0, err
 	}
 	if len(outputs) != 1 {
-		log.Fatal("expected exactly one output")
+		return 0, fmt.Errorf("expected exactly one output, got %d", len(outputs))
 	}
-	part2 := outputs[0]
-
-	fmt.Println(part1)
-	fmt.Println(part2)
-
+	return outputs[0], nil
 }
