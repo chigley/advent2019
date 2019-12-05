@@ -15,6 +15,13 @@ const (
 	opHalt          = 99
 )
 
+type paramMode int
+
+const (
+	modePosition paramMode = iota
+	modeImmediate
+)
+
 var errHalt = errors.New("intcode: halt")
 
 type computer struct {
@@ -52,17 +59,25 @@ func (c *computer) runOp() error {
 		return err
 	}
 
-	op := opCode(instr)
+	op, encodedModes := separateInstr(instr)
 
 	switch op {
 	case opAdd, opMult:
-		if err := c.binaryOp(op); err != nil {
+		modes, err := parseModes(encodedModes, 2)
+		if err != nil {
+			return err
+		}
+		if err := c.binaryOp(op, modes); err != nil {
 			return err
 		}
 		c.pc += 4
 		return nil
 	case opInput, opOutput:
-		if err := c.unaryOp(op); err != nil {
+		modes, err := parseModes(encodedModes, 1)
+		if err != nil {
+			return err
+		}
+		if err := c.unaryOp(op, modes); err != nil {
 			return err
 		}
 		c.pc += 2
@@ -97,7 +112,7 @@ func (c *computer) write(pos, val int) error {
 	return nil
 }
 
-func (c *computer) binaryOp(op opCode) error {
+func (c *computer) binaryOp(op opCode, modes []paramMode) error {
 	arg1, err := c.readPointer(c.pc + 1)
 	if err != nil {
 		return err
@@ -123,7 +138,7 @@ func (c *computer) binaryOp(op opCode) error {
 	}
 }
 
-func (c *computer) unaryOp(op opCode) error {
+func (c *computer) unaryOp(op opCode, modes []paramMode) error {
 	arg, err := c.Read(c.pc + 1)
 	if err != nil {
 		return err
@@ -149,4 +164,23 @@ func (c *computer) unaryOp(op opCode) error {
 	default:
 		return fmt.Errorf("intcode: invalid unary op code %d", op)
 	}
+}
+
+func separateInstr(instr int) (opCode, int) {
+	op := opCode(instr % 100)
+	modes := instr / 100
+	return op, modes
+}
+
+func parseModes(modes, n int) ([]paramMode, error) {
+	out := make([]paramMode, n)
+	for i := 0; i < n; i++ {
+		mode := modes % 10
+		if mode > 2 {
+			return nil, fmt.Errorf("intcode: unrecognised parameter mode %d", mode)
+		}
+		out[i] = paramMode(mode)
+		modes = modes / 10
+	}
+	return out, nil
 }
