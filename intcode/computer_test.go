@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var tests = []struct {
+var memoryTests = []struct {
 	initial []int
 	final   []int
 }{
@@ -16,12 +16,43 @@ var tests = []struct {
 	{[]int{1, 1, 1, 4, 99, 5, 6, 0, 99}, []int{30, 1, 1, 4, 2, 5, 6, 0, 99}},
 }
 
-func TestRun(t *testing.T) {
-	for _, tt := range tests {
+type testCase struct {
+	inputs  []int
+	outputs []int
+}
+
+var runTests = []struct {
+	program []int
+	tests   []testCase
+}{
+	{
+		program: []int{3, 0, 4, 0, 99},
+		tests: []testCase{
+			{[]int{0}, []int{0}},
+			{[]int{1}, []int{1}},
+		},
+	},
+}
+
+func TestMemory(t *testing.T) {
+	for _, tt := range memoryTests {
 		comp := New(tt.initial)
-		if err := comp.Run(); err != nil {
+		if _, err := comp.Run(nil); err != nil {
 			t.Error(err)
 		}
 		assert.Equal(t, tt.final, comp.memory)
+	}
+}
+
+func TestRun(t *testing.T) {
+	for _, tt := range runTests {
+		comp := New(tt.program)
+		for _, ttt := range tt.tests {
+			outputs, err := comp.Run(ttt.inputs)
+			if err != nil {
+				t.Error(err)
+			}
+			assert.Equal(t, ttt.outputs, outputs)
+		}
 	}
 }

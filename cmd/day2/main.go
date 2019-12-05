@@ -40,7 +40,7 @@ func evaluate(program []int, noun, verb int) (int, error) {
 
 	comp := intcode.New(program)
 
-	if err := comp.Run(); err != nil {
+	if _, err := comp.Run(nil); err != nil {
 		return 0, err
 	}
 

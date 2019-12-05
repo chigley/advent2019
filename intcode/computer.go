@@ -6,17 +6,22 @@ import (
 )
 
 const (
-	opAdd  = 1
-	opMult = 2
-	opHalt = 99
+	opAdd    = 1
+	opMult   = 2
+	opInput  = 3
+	opOutput = 4
+	opHalt   = 99
 )
 
 var errHalt = errors.New("intcode: halt")
 
 type computer struct {
 	program []int
+
 	memory  []int
 	pc      int
+	inputs  []int
+	outputs []int
 }
 
 func New(program []int) *computer {
@@ -25,14 +30,16 @@ func New(program []int) *computer {
 	}
 }
 
-func (c *computer) Run() error {
+func (c *computer) Run(inputs []int) ([]int, error) {
 	c.memory = append([]int(nil), c.program...)
 	c.pc = 0
+	c.inputs = append([]int(nil), inputs...)
+	c.outputs = nil
 	for {
 		if err := c.runOp(); err == errHalt {
-			return nil
+			return c.outputs, nil
 		} else if err != nil {
-			return err
+			return nil, err
 		}
 	}
 }
@@ -49,6 +56,12 @@ func (c *computer) runOp() error {
 			return err
 		}
 		c.pc += 4
+		return nil
+	case opInput, opOutput:
+		if err := c.unaryOp(opCode); err != nil {
+			return err
+		}
+		c.pc += 2
 		return nil
 	case opHalt:
 		return errHalt
@@ -101,6 +114,34 @@ func (c *computer) binaryOp(opCode int) error {
 		return c.write(dst, arg1+arg2)
 	case opMult:
 		return c.write(dst, arg1*arg2)
+	default:
+		return fmt.Errorf("intcode: invalid binary op code %d", opCode)
+	}
+}
+
+func (c *computer) unaryOp(opCode int) error {
+	arg, err := c.Read(c.pc + 1)
+	if err != nil {
+		return err
+	}
+
+	switch opCode {
+	case opInput:
+		if len(c.inputs) == 0 {
+			return errors.New("intcode: input instruction has no input to read")
+		}
+
+		var input int
+		input, c.inputs = c.inputs[0], c.inputs[1:]
+
+		return c.write(arg, input)
+	case opOutput:
+		val, err := c.Read(arg)
+		if err != nil {
+			return err
+		}
+		c.outputs = append(c.outputs, val)
+		return nil
 	default:
 		return fmt.Errorf("intcode: invalid binary op code %d", opCode)
 	}
