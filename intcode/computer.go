@@ -143,6 +143,6 @@ func (c *computer) unaryOp(opCode int) error {
 		c.outputs = append(c.outputs, val)
 		return nil
 	default:
-		return fmt.Errorf("intcode: invalid binary op code %d", opCode)
+		return fmt.Errorf("intcode: invalid unary op code %d", opCode)
 	}
 }
