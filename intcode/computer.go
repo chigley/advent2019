@@ -58,29 +58,28 @@ func (c *computer) runOp() error {
 	if err != nil {
 		return err
 	}
+	c.pc++
 
 	op, encodedModes := separateInstr(instr)
 
 	switch op {
 	case opAdd, opMult:
-		modes, err := parseModes(encodedModes, 2)
+		modes, err := decodeModes(encodedModes, 2)
 		if err != nil {
 			return err
 		}
 		if err := c.binaryOp(op, modes); err != nil {
 			return err
 		}
-		c.pc += 4
 		return nil
 	case opInput, opOutput:
-		modes, err := parseModes(encodedModes, 1)
+		modes, err := decodeModes(encodedModes, 1)
 		if err != nil {
 			return err
 		}
 		if err := c.unaryOp(op, modes); err != nil {
 			return err
 		}
-		c.pc += 2
 		return nil
 	case opHalt:
 		return errHalt
@@ -113,17 +112,21 @@ func (c *computer) write(pos, val int) error {
 }
 
 func (c *computer) binaryOp(op opCode, modes []paramMode) error {
-	arg1, err := c.readPointer(c.pc + 1)
+	if len(modes) != 2 {
+		return fmt.Errorf("intcode: binary op got %d paremeter modes, expected 3", len(modes))
+	}
+
+	arg1, err := c.readArg(modes[0])
 	if err != nil {
 		return err
 	}
 
-	arg2, err := c.readPointer(c.pc + 2)
+	arg2, err := c.readArg(modes[1])
 	if err != nil {
 		return err
 	}
 
-	dst, err := c.Read(c.pc + 3)
+	dst, err := c.readArg(modeImmediate)
 	if err != nil {
 		return err
 	}
@@ -139,13 +142,17 @@ func (c *computer) binaryOp(op opCode, modes []paramMode) error {
 }
 
 func (c *computer) unaryOp(op opCode, modes []paramMode) error {
-	arg, err := c.Read(c.pc + 1)
-	if err != nil {
-		return err
+	if len(modes) != 1 {
+		return fmt.Errorf("intcode: unary op got %d paremeter modes, expected 1", len(modes))
 	}
 
 	switch op {
 	case opInput:
+		dst, err := c.readArg(modeImmediate)
+		if err != nil {
+			return err
+		}
+
 		if len(c.inputs) == 0 {
 			return errors.New("intcode: input instruction has no input to read")
 		}
@@ -153,16 +160,37 @@ func (c *computer) unaryOp(op opCode, modes []paramMode) error {
 		var input int
 		input, c.inputs = c.inputs[0], c.inputs[1:]
 
-		return c.write(arg, input)
+		return c.write(dst, input)
 	case opOutput:
-		val, err := c.Read(arg)
+		arg, err := c.readArg(modes[0])
 		if err != nil {
 			return err
 		}
-		c.outputs = append(c.outputs, val)
+		c.outputs = append(c.outputs, arg)
 		return nil
 	default:
 		return fmt.Errorf("intcode: invalid unary op code %d", op)
+	}
+}
+
+func (c *computer) readArg(mode paramMode) (int, error) {
+	switch mode {
+	case modePosition:
+		arg, err := c.readPointer(c.pc)
+		if err != nil {
+			return 0, err
+		}
+		c.pc++
+		return arg, nil
+	case modeImmediate:
+		arg, err := c.Read(c.pc)
+		if err != nil {
+			return 0, err
+		}
+		c.pc++
+		return arg, nil
+	default:
+		return 0, fmt.Errorf("intcode: unrecognised parameter mode %d", mode)
 	}
 }
 
@@ -172,14 +200,10 @@ func separateInstr(instr int) (opCode, int) {
 	return op, modes
 }
 
-func parseModes(modes, n int) ([]paramMode, error) {
+func decodeModes(modes, n int) ([]paramMode, error) {
 	out := make([]paramMode, n)
 	for i := 0; i < n; i++ {
-		mode := modes % 10
-		if mode > 2 {
-			return nil, fmt.Errorf("intcode: unrecognised parameter mode %d", mode)
-		}
-		out[i] = paramMode(mode)
+		out[i] = paramMode(modes % 10)
 		modes = modes / 10
 	}
 	return out, nil
