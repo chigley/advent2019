@@ -77,7 +77,7 @@ func (c *Computer) runOp() error {
 		}
 		return nil
 	case opAdd, opMult, opLessThan, opEquals:
-		modes, err := decodeModes(encodedModes, 2)
+		modes, err := decodeModes(encodedModes, 3)
 		if err != nil {
 			return err
 		}
@@ -126,7 +126,7 @@ func (c *Computer) write(pos, val int) error {
 
 func (c *Computer) binaryOp(op opCode, modes []paramMode) error {
 	if len(modes) != 2 {
-		return fmt.Errorf("intcode: binary op got %d paremeter modes, expected 3", len(modes))
+		return fmt.Errorf("intcode: binary op got %d paremeter modes, expected 2", len(modes))
 	}
 
 	arg1, err := c.readArg(modes[0])
@@ -156,7 +156,7 @@ func (c *Computer) binaryOp(op opCode, modes []paramMode) error {
 }
 
 func (c *Computer) binaryOpWithDest(op opCode, modes []paramMode) error {
-	if len(modes) != 2 {
+	if len(modes) != 3 {
 		return fmt.Errorf("intcode: binary op got %d paremeter modes, expected 3", len(modes))
 	}
 
@@ -170,26 +170,23 @@ func (c *Computer) binaryOpWithDest(op opCode, modes []paramMode) error {
 		return err
 	}
 
-	dst, err := c.readArg(modeImmediate)
-	if err != nil {
-		return err
-	}
+	dstMode := modes[2]
 
 	switch op {
 	case opAdd:
-		return c.write(dst, arg1+arg2)
+		return c.writeArg(dstMode, arg1+arg2)
 	case opMult:
-		return c.write(dst, arg1*arg2)
+		return c.writeArg(dstMode, arg1*arg2)
 	case opLessThan:
 		if arg1 < arg2 {
-			return c.write(dst, 1)
+			return c.writeArg(dstMode, 1)
 		}
-		return c.write(dst, 0)
+		return c.writeArg(dstMode, 0)
 	case opEquals:
 		if arg1 == arg2 {
-			return c.write(dst, 1)
+			return c.writeArg(dstMode, 1)
 		}
-		return c.write(dst, 0)
+		return c.writeArg(dstMode, 0)
 	default:
 		return fmt.Errorf("intcode: invalid binary op code %d", op)
 	}
@@ -202,11 +199,6 @@ func (c *Computer) unaryOp(op opCode, modes []paramMode) error {
 
 	switch op {
 	case opInput:
-		dst, err := c.readArg(modeImmediate)
-		if err != nil {
-			return err
-		}
-
 		if len(c.inputs) == 0 {
 			return errors.New("intcode: input instruction has no input to read")
 		}
@@ -214,7 +206,7 @@ func (c *Computer) unaryOp(op opCode, modes []paramMode) error {
 		var input int
 		input, c.inputs = c.inputs[0], c.inputs[1:]
 
-		return c.write(dst, input)
+		return c.writeArg(modes[0], input)
 	case opOutput:
 		arg, err := c.readArg(modes[0])
 		if err != nil {
@@ -246,6 +238,18 @@ func (c *Computer) readArg(mode paramMode) (int, error) {
 	default:
 		return 0, fmt.Errorf("intcode: unrecognised parameter mode %d", mode)
 	}
+}
+
+func (c *Computer) writeArg(mode paramMode, val int) error {
+	if mode != modePosition {
+		return fmt.Errorf("intcode: invalid parameter mode for write: %d", mode)
+	}
+
+	dst, err := c.readArg(modeImmediate)
+	if err != nil {
+		return err
+	}
+	return c.write(dst, val)
 }
 
 func separateInstr(instr int) (opCode, int) {
