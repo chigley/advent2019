@@ -32,14 +32,13 @@ func main() {
 }
 
 func evaluate(program []int, noun, verb int) (int, error) {
-	comp := intcode.New(program)
+	if len(program) < 3 {
+		return 0, errors.New("program not long enough to write noun and verb")
+	}
+	program[1] = noun
+	program[2] = verb
 
-	if err := comp.Write(1, noun); err != nil {
-		return 0, err
-	}
-	if err := comp.Write(2, verb); err != nil {
-		return 0, err
-	}
+	comp := intcode.New(program)
 
 	if err := comp.Run(); err != nil {
 		return 0, err

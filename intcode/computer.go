@@ -69,7 +69,7 @@ func (c *computer) readPointer(pos int) (int, error) {
 	return c.Read(i)
 }
 
-func (c *computer) Write(pos, val int) error {
+func (c *computer) write(pos, val int) error {
 	if pos >= len(c.memory) {
 		return fmt.Errorf("intcode: index %d is out of bounds", pos)
 	}
@@ -95,9 +95,9 @@ func (c *computer) binaryOp(opCode int) error {
 
 	switch opCode {
 	case opAdd:
-		return c.Write(dst, arg1+arg2)
+		return c.write(dst, arg1+arg2)
 	case opMult:
-		return c.Write(dst, arg1*arg2)
+		return c.write(dst, arg1*arg2)
 	default:
 		return fmt.Errorf("intcode: invalid binary op code %d", opCode)
 	}
