@@ -1,4 +1,4 @@
-package main
+package intcode
 
 import (
 	"testing"
@@ -21,7 +21,7 @@ func TestRun(t *testing.T) {
 		comp := computer{
 			memory: tt.initial,
 		}
-		if err := comp.run(); err != nil {
+		if err := comp.Run(); err != nil {
 			t.Error(err)
 		}
 		assert.Equal(t, tt.final, comp.memory)

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/chigley/advent2019"
+	"github.com/chigley/advent2019/intcode"
 )
 
 func main() {
@@ -31,22 +32,20 @@ func main() {
 }
 
 func evaluate(program []int, noun, verb int) (int, error) {
-	comp := computer{
-		memory: append([]int(nil), program...),
-	}
+	comp := intcode.New(program)
 
-	if err := comp.write(1, noun); err != nil {
+	if err := comp.Write(1, noun); err != nil {
 		return 0, err
 	}
-	if err := comp.write(2, verb); err != nil {
-		return 0, err
-	}
-
-	if err := comp.run(); err != nil {
+	if err := comp.Write(2, verb); err != nil {
 		return 0, err
 	}
 
-	return comp.read(0)
+	if err := comp.Run(); err != nil {
+		return 0, err
+	}
+
+	return comp.Read(0)
 }
 
 func findInputs(program []int, target int) (int, int, error) {

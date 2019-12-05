@@ -1,4 +1,4 @@
-package main
+package intcode
 
 import (
 	"errors"
@@ -11,14 +11,20 @@ const (
 	opHalt = 99
 )
 
-var errHalt = errors.New("halt")
+var errHalt = errors.New("intcode: halt")
 
 type computer struct {
 	memory []int
 	pc     int
 }
 
-func (c *computer) run() error {
+func New(program []int) *computer {
+	return &computer{
+		memory: append([]int(nil), program...),
+	}
+}
+
+func (c *computer) Run() error {
 	for {
 		if err := c.runOp(); err == errHalt {
 			return nil
@@ -29,7 +35,7 @@ func (c *computer) run() error {
 }
 
 func (c *computer) runOp() error {
-	opCode, err := c.read(c.pc)
+	opCode, err := c.Read(c.pc)
 	if err != nil {
 		return err
 	}
@@ -44,28 +50,28 @@ func (c *computer) runOp() error {
 	case opHalt:
 		return errHalt
 	default:
-		return fmt.Errorf("invalid op code %d", opCode)
+		return fmt.Errorf("intcode: invalid op code %d", opCode)
 	}
 }
 
-func (c *computer) read(pos int) (int, error) {
+func (c *computer) Read(pos int) (int, error) {
 	if pos >= len(c.memory) {
-		return 0, fmt.Errorf("index %d is out of bounds", pos)
+		return 0, fmt.Errorf("intcode: index %d is out of bounds", pos)
 	}
 	return c.memory[pos], nil
 }
 
 func (c *computer) readPointer(pos int) (int, error) {
-	i, err := c.read(pos)
+	i, err := c.Read(pos)
 	if err != nil {
 		return 0, err
 	}
-	return c.read(i)
+	return c.Read(i)
 }
 
-func (c *computer) write(pos, val int) error {
+func (c *computer) Write(pos, val int) error {
 	if pos >= len(c.memory) {
-		return fmt.Errorf("index %d is out of bounds", pos)
+		return fmt.Errorf("intcode: index %d is out of bounds", pos)
 	}
 	c.memory[pos] = val
 	return nil
@@ -82,17 +88,17 @@ func (c *computer) binaryOp(opCode int) error {
 		return err
 	}
 
-	dst, err := c.read(c.pc + 3)
+	dst, err := c.Read(c.pc + 3)
 	if err != nil {
 		return err
 	}
 
 	switch opCode {
 	case opAdd:
-		return c.write(dst, arg1+arg2)
+		return c.Write(dst, arg1+arg2)
 	case opMult:
-		return c.write(dst, arg1*arg2)
+		return c.Write(dst, arg1*arg2)
 	default:
-		return fmt.Errorf("invalid binary op code %d", opCode)
+		return fmt.Errorf("intcode: invalid binary op code %d", opCode)
 	}
 }
