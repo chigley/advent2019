@@ -15,7 +15,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	outputs, err := intcode.New(program).Run([]int{1})
+	comp := intcode.New(program)
+
+	outputs, err := comp.Run([]int{1})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,5 +26,18 @@ func main() {
 			log.Fatal("got a non-zero output before the end")
 		}
 	}
-	fmt.Println(outputs[len(outputs)-1])
+	part1 := outputs[len(outputs)-1]
+
+	outputs, err = comp.Run([]int{5})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(outputs) != 1 {
+		log.Fatal("expected exactly one output")
+	}
+	part2 := outputs[0]
+
+	fmt.Println(part1)
+	fmt.Println(part2)
+
 }
