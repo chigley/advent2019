@@ -18,7 +18,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	fmt.Println(galaxy.totalOrbits())
+	fmt.Println(galaxy.orbitalTransfers("YOU", "SAN"))
 }
 
 func (o orbits) totalOrbits() (total int) {
@@ -33,6 +35,23 @@ func (o orbits) distanceToCOM(obj string, acc int) int {
 		return acc
 	}
 	return o.distanceToCOM(o[obj], acc+1)
+}
+
+func (o orbits) orbitalTransfers(from, to string) int {
+	fromAnc := o.ancestors(from, nil)
+	toAnc := o.ancestors(to, nil)
+
+	var i int
+	for ; fromAnc[i] == toAnc[i]; i++ {
+	}
+	return (len(fromAnc) - i) + (len(toAnc) - i)
+}
+
+func (o orbits) ancestors(obj string, acc []string) []string {
+	if obj == com {
+		return acc
+	}
+	return o.ancestors(o[obj], append([]string{o[obj]}, acc...))
 }
 
 func readGalaxy(r io.Reader) (orbits, error) {
