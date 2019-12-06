@@ -30,7 +30,7 @@ type (
 )
 
 func main() {
-	wires, err := advent2019.ReadCSV(os.Stdin)
+	wires, err := advent2019.ReadCSV(os.Stdin, ',')
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -56,8 +56,9 @@ func ReadIntsLine(r io.Reader) ([]int, error) {
 	return vals, nil
 }
 
-func ReadCSV(r io.Reader) ([][]string, error) {
+func ReadCSV(r io.Reader, comma rune) ([][]string, error) {
 	reader := csv.NewReader(r)
+	reader.Comma = comma
 	reader.FieldsPerRecord = -1
 	return reader.ReadAll()
 }
