@@ -33,8 +33,9 @@ type Computer struct {
 
 	memory  []int
 	pc      int
-	inputs  []int
-	outputs []int
+	inputs  <-chan int
+	outputs chan int
+	err     error
 }
 
 func New(program []int) *Computer {
@@ -44,17 +45,54 @@ func New(program []int) *Computer {
 }
 
 func (c *Computer) Run(inputs []int) ([]int, error) {
+	inChan := make(chan int)
+	go func() {
+		for _, in := range inputs {
+			inChan <- in
+		}
+		close(inChan)
+	}()
+
+	var outputs []int
+	for out := range c.RunInteractive(inChan, nil) {
+		outputs = append(outputs, out)
+	}
+
+	if err := c.Err(); err != nil {
+		return nil, err
+	}
+
+	return outputs, nil
+}
+
+func (c *Computer) RunInteractive(inputs chan int, done func()) chan int {
 	c.memory = append([]int(nil), c.program...)
 	c.pc = 0
-	c.inputs = append([]int(nil), inputs...)
-	c.outputs = nil
-	for {
-		if err := c.runOp(); err == errHalt {
-			return c.outputs, nil
-		} else if err != nil {
-			return nil, err
+	c.inputs = inputs
+	c.outputs = make(chan int)
+
+	go func() {
+		for {
+			c.err = c.runOp()
+			if c.err != nil {
+				close(c.outputs)
+				if done != nil {
+					done()
+				}
+				return
+			}
+
 		}
+	}()
+
+	return c.outputs
+}
+
+func (c *Computer) Err() error {
+	if c.err == errHalt {
+		return nil
 	}
+	return c.err
 }
 
 func (c *Computer) runOp() error {
@@ -199,20 +237,13 @@ func (c *Computer) unaryOp(op opCode, modes []paramMode) error {
 
 	switch op {
 	case opInput:
-		if len(c.inputs) == 0 {
-			return errors.New("intcode: input instruction has no input to read")
-		}
-
-		var input int
-		input, c.inputs = c.inputs[0], c.inputs[1:]
-
-		return c.writeArg(modes[0], input)
+		return c.writeArg(modes[0], <-c.inputs)
 	case opOutput:
 		arg, err := c.readArg(modes[0])
 		if err != nil {
 			return err
 		}
-		c.outputs = append(c.outputs, arg)
+		c.outputs <- arg
 		return nil
 	default:
 		return fmt.Errorf("intcode: invalid unary op code %d", op)
