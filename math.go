@@ -7,6 +7,13 @@ func Abs(x int) int {
 	return x
 }
 
+func Max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
 func Permutations(a []int) <-chan []int {
 	if len(a) == 0 {
 		return nil
