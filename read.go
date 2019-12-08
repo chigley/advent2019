@@ -29,6 +29,17 @@ func ReadInts(r io.Reader) ([]int, error) {
 	return vals, scanner.Err()
 }
 
+func ReadStrings(r io.Reader) ([]string, error) {
+	var vals []string
+
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		vals = append(vals, scanner.Text())
+	}
+
+	return vals, scanner.Err()
+}
+
 func ReadIntsLine(r io.Reader) ([]int, error) {
 	reader := csv.NewReader(r)
 
