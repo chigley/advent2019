@@ -21,4 +21,28 @@ func TestDay1(t *testing.T) {
 	}
 
 	assert.Equal(t, 2159, day8.Part1(img))
+
+	if _, err := day8.Part2(img); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestRender(t *testing.T) {
+	layers := day8.SpaceImage{
+		{[]day8.Pixel{0, 2}, []day8.Pixel{2, 2}},
+		{[]day8.Pixel{1, 1}, []day8.Pixel{2, 2}},
+		{[]day8.Pixel{2, 2}, []day8.Pixel{1, 2}},
+		{[]day8.Pixel{0, 0}, []day8.Pixel{0, 0}},
+	}
+
+	image, err := layers.Render()
+	if err != nil {
+		t.Error(err)
+	}
+
+	expected := day8.Layer{
+		{0, 1},
+		{1, 0},
+	}
+	assert.Equal(t, expected, image)
 }

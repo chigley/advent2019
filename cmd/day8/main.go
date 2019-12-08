@@ -3,7 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -24,13 +28,23 @@ const (
 	Transparent
 )
 
+var errEmptyImage = errors.New("empty image or zero width or height")
+
 func main() {
 	img, err := ReadImage(os.Stdin, 25, 6)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(Part1(img))
+	part1 := Part1(img)
+
+	part2, err := Part2(img)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(part1)
+	fmt.Printf("Part 2 output saved to %s\n", part2)
 }
 
 func Part1(img SpaceImage) int {
@@ -48,6 +62,29 @@ func Part1(img SpaceImage) int {
 	return img[layerIndex].frequency(White) * img[layerIndex].frequency(Transparent)
 }
 
+func Part2(img SpaceImage) (path string, err error) {
+	tmpfile, err := ioutil.TempFile("", "")
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		if cerr := tmpfile.Close(); err == nil {
+			err = cerr
+		}
+	}()
+
+	render, err := img.Render()
+	if err != nil {
+		return "", err
+	}
+
+	if err := render.SavePNG(tmpfile); err != nil {
+		return "", err
+	}
+
+	return tmpfile.Name(), nil
+}
+
 func (l Layer) frequency(p Pixel) (ret int) {
 	for _, row := range l {
 		for _, pixel := range row {
@@ -57,6 +94,61 @@ func (l Layer) frequency(p Pixel) (ret int) {
 		}
 	}
 	return
+}
+
+func (img SpaceImage) Render() (Layer, error) {
+	if len(img) == 0 || len(img[0]) == 0 || len(img[0][0]) == 0 {
+		return nil, errEmptyImage
+	}
+
+	// Initialise a transparent image
+	height, width := len(img[0]), len(img[0][0])
+	ret := make(Layer, height)
+	for i := 0; i < height; i++ {
+		ret[i] = make([]Pixel, width)
+		for j := 0; j < width; j++ {
+			ret[i][j] = Transparent
+		}
+	}
+
+	for i := 0; i < height; i++ {
+		for j := 0; j < width; j++ {
+			if ret[i][j] != Transparent {
+				continue
+			}
+
+			for _, layer := range img {
+				if layer[i][j] != Transparent {
+					ret[i][j] = layer[i][j]
+					break
+				}
+			}
+		}
+	}
+
+	return ret, nil
+}
+
+func (l Layer) SavePNG(w io.Writer) error {
+	if len(l) == 0 || len(l[0]) == 0 {
+		return errEmptyImage
+	}
+
+	height, width := len(l), len(l[0])
+
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	for i := 0; i < height; i++ {
+		for j := 0; j < width; j++ {
+			col, err := l[i][j].Color()
+			if err != nil {
+				return err
+			}
+			img.Set(j, i, col)
+		}
+	}
+
+	return png.Encode(w, img)
 }
 
 func ReadImage(r io.Reader, width, height int) (SpaceImage, error) {
@@ -93,4 +185,17 @@ func ReadImage(r io.Reader, width, height int) (SpaceImage, error) {
 	}
 
 	return img, nil
+}
+
+func (p Pixel) Color() (color.Color, error) {
+	switch p {
+	case White:
+		return color.White, nil
+	case Black:
+		return color.Black, nil
+	case Transparent:
+		return color.Transparent, nil
+	default:
+		return nil, fmt.Errorf("unknown pixel value %d", p)
+	}
 }
