@@ -18,6 +18,12 @@ type (
 	Pixel      int
 )
 
+const (
+	Black Pixel = iota
+	White
+	Transparent
+)
+
 func main() {
 	img, err := ReadImage(os.Stdin, 25, 6)
 	if err != nil {
@@ -32,14 +38,14 @@ func Part1(img SpaceImage) int {
 	zeroes := math.MaxInt64
 
 	for i, l := range img {
-		freq := l.frequency(0)
+		freq := l.frequency(Black)
 		if freq < zeroes {
 			layerIndex = i
 			zeroes = freq
 		}
 	}
 
-	return img[layerIndex].frequency(1) * img[layerIndex].frequency(2)
+	return img[layerIndex].frequency(White) * img[layerIndex].frequency(Transparent)
 }
 
 func (l Layer) frequency(p Pixel) (ret int) {
