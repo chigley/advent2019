@@ -8,15 +8,16 @@ import (
 type opCode int
 
 const (
-	opAdd         opCode = 1
-	opMult               = 2
-	opInput              = 3
-	opOutput             = 4
-	opJumpIfTrue         = 5
-	opJumpIfFalse        = 6
-	opLessThan           = 7
-	opEquals             = 8
-	opHalt               = 99
+	opAdd             opCode = 1
+	opMult                   = 2
+	opInput                  = 3
+	opOutput                 = 4
+	opJumpIfTrue             = 5
+	opJumpIfFalse            = 6
+	opLessThan               = 7
+	opEquals                 = 8
+	opAdjRelativeBase        = 9
+	opHalt                   = 99
 )
 
 type paramMode int
@@ -31,11 +32,12 @@ var errHalt = errors.New("intcode: halt")
 type Computer struct {
 	program []int
 
-	memory  []int
-	pc      int
-	inputs  <-chan int
-	outputs chan int
-	err     error
+	memory       []int
+	pc           int
+	relativeBase int
+	inputs       <-chan int
+	outputs      chan int
+	err          error
 }
 
 func New(program []int) *Computer {
@@ -68,6 +70,7 @@ func (c *Computer) Run(inputs []int) ([]int, error) {
 func (c *Computer) RunInteractive(inputs chan int, done func()) chan int {
 	c.memory = append([]int(nil), c.program...)
 	c.pc = 0
+	c.relativeBase = 0
 	c.inputs = inputs
 	c.outputs = make(chan int)
 
@@ -123,7 +126,7 @@ func (c *Computer) runOp() error {
 			return err
 		}
 		return nil
-	case opInput, opOutput:
+	case opInput, opOutput, opAdjRelativeBase:
 		modes, err := decodeModes(encodedModes, 1)
 		if err != nil {
 			return err
@@ -244,6 +247,13 @@ func (c *Computer) unaryOp(op opCode, modes []paramMode) error {
 			return err
 		}
 		c.outputs <- arg
+		return nil
+	case opAdjRelativeBase:
+		arg, err := c.readArg(modes[0])
+		if err != nil {
+			return err
+		}
+		c.relativeBase += arg
 		return nil
 	default:
 		return fmt.Errorf("intcode: invalid unary op code %d", op)
