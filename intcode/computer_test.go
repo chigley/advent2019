@@ -109,6 +109,20 @@ var runTests = []struct {
 				1008, 100, 16, 101, 1006, 101, 0, 99}},
 		},
 	},
+
+	{
+		program: []int{1102, 34915192, 34915192, 7, 4, 7, 99, 0},
+		tests: []testCase{
+			{[]int{}, []int{1219070632396864}},
+		},
+	},
+
+	{
+		program: []int{104, 1125899906842624, 99},
+		tests: []testCase{
+			{[]int{}, []int{1125899906842624}},
+		},
+	},
 }
 
 func TestRun(t *testing.T) {
