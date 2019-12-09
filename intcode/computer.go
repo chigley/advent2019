@@ -25,6 +25,7 @@ type paramMode int
 const (
 	modePosition paramMode = iota
 	modeImmediate
+	modeRelative
 )
 
 var errHalt = errors.New("intcode: halt")
@@ -149,10 +150,13 @@ func (c *Computer) Read(pos int) (int, error) {
 	return c.memory[pos], nil
 }
 
-func (c *Computer) readPointer(pos int) (int, error) {
+func (c *Computer) readPointer(pos int, relative bool) (int, error) {
 	i, err := c.Read(pos)
 	if err != nil {
 		return 0, err
+	}
+	if relative {
+		return c.Read(i + c.relativeBase)
 	}
 	return c.Read(i)
 }
@@ -262,8 +266,8 @@ func (c *Computer) unaryOp(op opCode, modes []paramMode) error {
 
 func (c *Computer) readArg(mode paramMode) (int, error) {
 	switch mode {
-	case modePosition:
-		arg, err := c.readPointer(c.pc)
+	case modePosition, modeRelative:
+		arg, err := c.readPointer(c.pc, mode == modeRelative)
 		if err != nil {
 			return 0, err
 		}
@@ -282,15 +286,20 @@ func (c *Computer) readArg(mode paramMode) (int, error) {
 }
 
 func (c *Computer) writeArg(mode paramMode, val int) error {
-	if mode != modePosition {
+	switch mode {
+	case modePosition, modeRelative:
+		dst, err := c.readArg(modeImmediate)
+		if err != nil {
+			return err
+		}
+		if mode == modePosition {
+			return c.write(dst, val)
+		}
+		return c.write(dst+c.relativeBase, val)
+	default:
 		return fmt.Errorf("intcode: invalid parameter mode for write: %d", mode)
-	}
 
-	dst, err := c.readArg(modeImmediate)
-	if err != nil {
-		return err
 	}
-	return c.write(dst, val)
 }
 
 func separateInstr(instr int) (opCode, int) {
