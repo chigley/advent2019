@@ -28,6 +28,8 @@ const (
 	modeRelative
 )
 
+const maxMemory = 2048
+
 var errHalt = errors.New("intcode: halt")
 
 type Computer struct {
@@ -69,7 +71,9 @@ func (c *Computer) Run(inputs []int) ([]int, error) {
 }
 
 func (c *Computer) RunInteractive(inputs chan int, done func()) chan int {
-	c.memory = append([]int(nil), c.program...)
+	c.memory = make([]int, maxMemory)
+	copy(c.memory, c.program)
+
 	c.pc = 0
 	c.relativeBase = 0
 	c.inputs = inputs
