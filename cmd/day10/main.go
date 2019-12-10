@@ -14,10 +14,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(Part1(Asteroids(input)))
+	_, part1 := Part1(Asteroids(input))
+	fmt.Println(part1)
 }
 
-func Part1(asteroids []advent2019.Point) int {
+func Part1(asteroids []advent2019.Point) (advent2019.Point, int) {
+	var p advent2019.Point
 	mostAsteroids := -1
 
 	for _, a1 := range asteroids {
@@ -28,10 +30,14 @@ func Part1(asteroids []advent2019.Point) int {
 			}
 			uniqueDirs[a1.Direction(a2)] = struct{}{}
 		}
+		if numAsteroids := len(uniqueDirs); numAsteroids > mostAsteroids {
+			p = a1
+			mostAsteroids = numAsteroids
+		}
 		mostAsteroids = advent2019.Max(mostAsteroids, len(uniqueDirs))
 	}
 
-	return mostAsteroids
+	return p, mostAsteroids
 }
 
 func Asteroids(input []string) (ret []advent2019.Point) {

@@ -107,11 +107,13 @@ func TestDay10(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, 280, day10.Part1(day10.Asteroids(lines)))
+	_, part1 := day10.Part1(day10.Asteroids(lines))
+	assert.Equal(t, 280, part1)
 }
 
 func TestPart1(t *testing.T) {
 	for _, tt := range part1Tests {
-		assert.Equal(t, tt.output, day10.Part1(day10.Asteroids(tt.input)))
+		_, output := day10.Part1(day10.Asteroids(tt.input))
+		assert.Equal(t, tt.output, output)
 	}
 }
