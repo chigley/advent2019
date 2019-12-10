@@ -8,7 +8,7 @@ type Direction struct {
 	DX, DY int
 }
 
-func (p1 *Point) Direction(p2 Point) Direction {
+func (p1 *Point) Direction(p2 Point) (Direction, int) {
 	dx := p2.X - p1.X
 	dy := p2.Y - p1.Y
 
@@ -17,7 +17,7 @@ func (p1 *Point) Direction(p2 Point) Direction {
 	return Direction{
 		DX: dx / gcd,
 		DY: dy / gcd,
-	}
+	}, gcd
 }
 
 func (p1 *Point) Distance(p2 Point) int {
