@@ -15,17 +15,13 @@ var (
 	dirY = map[string]int{"R": 0, "U": 1, "L": 0, "D": -1}
 )
 
-type point struct {
-	x, y int
-}
-
 type (
 	distance int
 	numSteps int
 
 	wireID int
 
-	visitedPoints map[point]wireSet
+	visitedPoints map[advent2019.Point]wireSet
 	wireSet       map[wireID]numSteps
 )
 
@@ -56,7 +52,7 @@ func optimalPoint(wires [][]string) (distance, numSteps, error) {
 
 func (v visitedPoints) optimalPoint() (distance, numSteps, error) {
 	var (
-		origin point
+		origin advent2019.Point
 
 		maxVisited  int
 		minDistance distance
@@ -69,7 +65,7 @@ func (v visitedPoints) optimalPoint() (distance, numSteps, error) {
 			continue
 		}
 
-		dist := origin.distance(point)
+		dist := distance(origin.Distance(point))
 
 		var totalSteps numSteps
 		for _, steps := range wires {
@@ -102,7 +98,7 @@ func (v visitedPoints) optimalPoint() (distance, numSteps, error) {
 
 func (v visitedPoints) walkWire(id wireID, path []string) error {
 	var (
-		pos   point
+		pos   advent2019.Point
 		steps numSteps
 	)
 	for _, move := range path {
@@ -126,8 +122,8 @@ func (v visitedPoints) walkWire(id wireID, path []string) error {
 		}
 
 		for i := 0; i < distance; i++ {
-			pos.x += x
-			pos.y += y
+			pos.X += x
+			pos.Y += y
 			steps++
 
 			wires, ok := v[pos]
@@ -144,8 +140,4 @@ func (v visitedPoints) walkWire(id wireID, path []string) error {
 		}
 	}
 	return nil
-}
-
-func (p1 *point) distance(p2 point) distance {
-	return distance(advent2019.Abs(p1.x-p2.x) + advent2019.Abs(p1.y-p2.y))
 }
