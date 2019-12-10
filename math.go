@@ -7,6 +7,15 @@ func Abs(x int) int {
 	return x
 }
 
+func GCD(x, y int) int {
+	for y != 0 {
+		tmp := y
+		y = x % y
+		x = tmp
+	}
+	return x
+}
+
 func Max(x, y int) int {
 	if x > y {
 		return x
