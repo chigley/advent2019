@@ -9,6 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const part2Output = `.###....##.###..#..#.#......##.#..#.###....
+.#..#....#.#..#.#.#..#.......#.#..#.#..#...
+.###.....#.#..#.##...#.......#.#..#.#..#...
+.#..#....#.###..#.#..#.......#.#..#.###....
+.#..#.#..#.#.#..#.#..#....#..#.#..#.#......
+.###...##..#..#.#..#.####..##...##..#......
+`
+
 func TestDay11(t *testing.T) {
 	input, err := os.Open("testdata/input")
 	if err != nil {
@@ -26,5 +34,11 @@ func TestDay11(t *testing.T) {
 		t.Error(err)
 	}
 
+	part2, err := day11.Part2(program)
+	if err != nil {
+		t.Error(err)
+	}
+
 	assert.Equal(t, 2093, part1)
+	assert.Equal(t, part2Output, part2)
 }
