@@ -59,3 +59,13 @@ func permutations(k int, a []int, c chan<- []int) {
 		permutations(k-1, a, c)
 	}
 }
+
+func Sign(x int) int {
+	if x < 0 {
+		return -1
+	}
+	if x > 0 {
+		return 1
+	}
+	return 0
+}
