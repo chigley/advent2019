@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/chigley/advent2019"
+	"github.com/chigley/advent2019/vector"
 )
 
 var (
@@ -21,7 +22,7 @@ type (
 
 	wireID int
 
-	visitedPoints map[advent2019.Point]wireSet
+	visitedPoints map[vector.XY]wireSet
 	wireSet       map[wireID]numSteps
 )
 
@@ -52,7 +53,7 @@ func optimalPoint(wires [][]string) (distance, numSteps, error) {
 
 func (v visitedPoints) optimalPoint() (distance, numSteps, error) {
 	var (
-		origin advent2019.Point
+		origin vector.XY
 
 		maxVisited  int
 		minDistance distance
@@ -98,7 +99,7 @@ func (v visitedPoints) optimalPoint() (distance, numSteps, error) {
 
 func (v visitedPoints) walkWire(id wireID, path []string) error {
 	var (
-		pos   advent2019.Point
+		pos   vector.XY
 		steps numSteps
 	)
 	for _, move := range path {

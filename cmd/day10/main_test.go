@@ -6,6 +6,7 @@ import (
 
 	"github.com/chigley/advent2019"
 	day10 "github.com/chigley/advent2019/cmd/day10"
+	"github.com/chigley/advent2019/vector"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -97,7 +98,7 @@ var part1Tests = []struct {
 
 var part2Tests = []struct {
 	input []string
-	hit   map[int]advent2019.Point
+	hit   map[int]vector.XY
 }{
 	{
 		[]string{
@@ -122,7 +123,7 @@ var part2Tests = []struct {
 			"#.#.#.#####.####.###",
 			"###.##.####.##.#..##",
 		},
-		map[int]advent2019.Point{
+		map[int]vector.XY{
 			0:   {11, 12},
 			1:   {12, 1},
 			2:   {12, 2},

@@ -9,6 +9,7 @@ import (
 
 	"github.com/chigley/advent2019"
 	"github.com/chigley/advent2019/intcode"
+	"github.com/chigley/advent2019/vector"
 )
 
 type direction int
@@ -27,14 +28,14 @@ const (
 	white
 )
 
-type pointColours map[advent2019.Point]colour
+type pointColours map[vector.XY]colour
 
 type robot struct {
 	computer   *intcode.Computer
 	grid       pointColours
-	paintedSet map[advent2019.Point]struct{}
+	paintedSet map[vector.XY]struct{}
 
-	pos advent2019.Point
+	pos vector.XY
 	dir direction
 }
 
@@ -62,7 +63,7 @@ func Part1(program []int) (int, error) {
 	bot := robot{
 		computer:   intcode.New(program),
 		grid:       make(pointColours),
-		paintedSet: make(map[advent2019.Point]struct{}),
+		paintedSet: make(map[vector.XY]struct{}),
 	}
 	if err := bot.draw(); err != nil {
 		return 0, err
@@ -74,9 +75,9 @@ func Part2(program []int) (string, error) {
 	bot := robot{
 		computer:   intcode.New(program),
 		grid:       make(pointColours),
-		paintedSet: make(map[advent2019.Point]struct{}),
+		paintedSet: make(map[vector.XY]struct{}),
 	}
-	bot.grid[advent2019.Point{X: 0, Y: 0}] = white
+	bot.grid[vector.XY{X: 0, Y: 0}] = white
 	if err := bot.draw(); err != nil {
 		return "", err
 	}
@@ -144,7 +145,7 @@ func (g pointColours) String() string {
 
 	for y := maxY; y >= minY; y-- {
 		for x := minX; x <= maxX; x++ {
-			col := g[advent2019.Point{X: x, Y: y}]
+			col := g[vector.XY{X: x, Y: y}]
 			if col == black {
 				b.WriteString(".")
 			} else {

@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	"github.com/chigley/advent2019"
+	"github.com/chigley/advent2019/vector"
 )
 
 func main() {
@@ -30,12 +31,12 @@ func main() {
 	fmt.Println(part2.X*100 + part2.Y)
 }
 
-func Part1(asteroids []advent2019.Point) (advent2019.Point, int) {
-	var p advent2019.Point
+func Part1(asteroids []vector.XY) (vector.XY, int) {
+	var p vector.XY
 	mostAsteroids := -1
 
 	for _, a1 := range asteroids {
-		uniqueDirs := make(map[advent2019.Direction]struct{})
+		uniqueDirs := make(map[vector.XY]struct{})
 		for _, a2 := range asteroids {
 			if a1 == a2 {
 				continue
@@ -53,17 +54,17 @@ func Part1(asteroids []advent2019.Point) (advent2019.Point, int) {
 	return p, mostAsteroids
 }
 
-func Part2(laserPos advent2019.Point, input []advent2019.Point) (advent2019.Point, error) {
+func Part2(laserPos vector.XY, input []vector.XY) (vector.XY, error) {
 	hits := HitOrder(laserPos, input)
 	if len(hits) < 200 {
-		return advent2019.Point{}, errors.New("not enough asteroids")
+		return vector.XY{}, errors.New("not enough asteroids")
 	}
 	return hits[199], nil
 }
 
-func HitOrder(laserPos advent2019.Point, input []advent2019.Point) []advent2019.Point {
+func HitOrder(laserPos vector.XY, input []vector.XY) []vector.XY {
 	type asteroid struct {
-		pos  advent2019.Point
+		pos  vector.XY
 		dist int
 	}
 
@@ -76,7 +77,7 @@ func HitOrder(laserPos advent2019.Point, input []advent2019.Point) []advent2019.
 
 		dir, dist := laserPos.Direction(a)
 
-		angle := math.Atan2(float64(dir.DX), float64(-dir.DY))
+		angle := math.Atan2(float64(dir.X), float64(-dir.Y))
 		if angle < 0 {
 			angle += 2 * math.Pi
 		}
@@ -99,7 +100,7 @@ func HitOrder(laserPos advent2019.Point, input []advent2019.Point) []advent2019.
 
 	// Loop through the angles in order, popping the nearest asteroid from the
 	// front of the slice each time
-	hits := make([]advent2019.Point, 0, len(input)-1)
+	hits := make([]vector.XY, 0, len(input)-1)
 	for {
 		for _, ang := range angles {
 			asteroids := asteroidsAtAngle[ang]
@@ -117,11 +118,11 @@ func HitOrder(laserPos advent2019.Point, input []advent2019.Point) []advent2019.
 	}
 }
 
-func Asteroids(input []string) (ret []advent2019.Point) {
+func Asteroids(input []string) (ret []vector.XY) {
 	for y, line := range input {
 		for x, char := range line {
 			if char == '#' {
-				ret = append(ret, advent2019.Point{X: x, Y: y})
+				ret = append(ret, vector.XY{X: x, Y: y})
 			}
 		}
 	}
