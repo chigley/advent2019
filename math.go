@@ -16,6 +16,14 @@ func GCD(x, y int) int {
 	return x
 }
 
+func LCM(x, y int, zs ...int) int {
+	ret := x * y / GCD(x, y)
+	for _, z := range zs {
+		ret = LCM(ret, z)
+	}
+	return ret
+}
+
 func Max(x, y int) int {
 	if x > y {
 		return x

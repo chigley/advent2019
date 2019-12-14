@@ -12,7 +12,7 @@ var part1Tests = []struct {
 	moons day12.Moons
 	steps int
 
-	output int
+	part1, part2 int
 }{
 	{
 		moons: day12.Moons{
@@ -20,8 +20,9 @@ var part1Tests = []struct {
 			Y: day12.Axis{{Pos: 0}, {Pos: -10}, {Pos: -8}, {Pos: 5}},
 			Z: day12.Axis{{Pos: 2}, {Pos: -7}, {Pos: 8}, {Pos: -1}},
 		},
-		steps:  10,
-		output: 179,
+		steps: 10,
+		part1: 179,
+		part2: 2772,
 	},
 	{
 		moons: day12.Moons{
@@ -29,8 +30,9 @@ var part1Tests = []struct {
 			Y: day12.Axis{{Pos: -10}, {Pos: 5}, {Pos: -7}, {Pos: -8}},
 			Z: day12.Axis{{Pos: 0}, {Pos: 10}, {Pos: 3}, {Pos: -3}},
 		},
-		steps:  100,
-		output: 1940,
+		steps: 100,
+		part1: 1940,
+		part2: 4686774924,
 	},
 }
 
@@ -46,11 +48,13 @@ func TestDay12(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, 7138, day12.Part1(moons, 1000))
+	assert.Equal(t, 7138, day12.Part1(moons.Clone(), 1000))
+	assert.Equal(t, 572087463375796, day12.Part2(moons.Clone()))
 }
 
 func TestPart1(t *testing.T) {
 	for _, tt := range part1Tests {
-		assert.Equal(t, tt.output, day12.Part1(tt.moons, tt.steps))
+		assert.Equal(t, tt.part1, day12.Part1(tt.moons.Clone(), tt.steps))
+		assert.Equal(t, tt.part2, day12.Part2(tt.moons))
 	}
 }
