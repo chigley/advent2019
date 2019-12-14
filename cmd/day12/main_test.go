@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	day12 "github.com/chigley/advent2019/cmd/day12"
-	"github.com/chigley/advent2019/vector"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,20 +16,18 @@ var part1Tests = []struct {
 }{
 	{
 		moons: day12.Moons{
-			day12.Moon{Pos: vector.XYZ{X: -1, Y: 0, Z: 2}},
-			day12.Moon{Pos: vector.XYZ{X: 2, Y: -10, Z: -7}},
-			day12.Moon{Pos: vector.XYZ{X: 4, Y: -8, Z: 8}},
-			day12.Moon{Pos: vector.XYZ{X: 3, Y: 5, Z: -1}},
+			X: day12.Axis{{Pos: -1}, {Pos: 2}, {Pos: 4}, {Pos: 3}},
+			Y: day12.Axis{{Pos: 0}, {Pos: -10}, {Pos: -8}, {Pos: 5}},
+			Z: day12.Axis{{Pos: 2}, {Pos: -7}, {Pos: 8}, {Pos: -1}},
 		},
 		steps:  10,
 		output: 179,
 	},
 	{
 		moons: day12.Moons{
-			day12.Moon{Pos: vector.XYZ{X: -8, Y: -10, Z: 0}},
-			day12.Moon{Pos: vector.XYZ{X: 5, Y: 5, Z: 10}},
-			day12.Moon{Pos: vector.XYZ{X: 2, Y: -7, Z: 3}},
-			day12.Moon{Pos: vector.XYZ{X: 9, Y: -8, Z: -3}},
+			X: day12.Axis{{Pos: -8}, {Pos: 5}, {Pos: 2}, {Pos: 9}},
+			Y: day12.Axis{{Pos: -10}, {Pos: 5}, {Pos: -7}, {Pos: -8}},
+			Z: day12.Axis{{Pos: 0}, {Pos: 10}, {Pos: 3}, {Pos: -3}},
 		},
 		steps:  100,
 		output: 1940,

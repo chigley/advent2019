@@ -10,10 +10,12 @@ import (
 	"github.com/chigley/advent2019/vector"
 )
 
-type Moons []Moon
+type Moons struct {
+	X, Y, Z Axis
+}
 
-type Moon struct {
-	Pos, Vel vector.XYZ
+type Axis []struct {
+	Pos, Vel int
 }
 
 func main() {
@@ -26,63 +28,56 @@ func main() {
 }
 
 func Part1(ms Moons, steps int) int {
-	ms = ms.stepN(steps)
+	ms.stepN(steps)
 	return ms.energy()
 }
 
-func (ms Moons) stepN(n int) Moons {
+func (ms *Moons) step() {
+	ms.X.step()
+	ms.Y.step()
+	ms.Z.step()
+}
+
+func (ms *Moons) stepN(n int) {
 	for i := 0; i < n; i++ {
-		ms = ms.step()
+		ms.step()
 	}
-	return ms
 }
 
-func (ms Moons) step() Moons {
-	ret := make(Moons, len(ms))
-	copy(ret, ms)
-
-	for i, m1 := range ms {
-		for j, m2 := range ms {
-			if i >= j {
-				continue
-			}
-
-			x := advent2019.Sign(m2.Pos.X - m1.Pos.X)
-			ret[i].Vel.X += x
-			ret[j].Vel.X -= x
-
-			y := advent2019.Sign(m2.Pos.Y - m1.Pos.Y)
-			ret[i].Vel.Y += y
-			ret[j].Vel.Y -= y
-
-			z := advent2019.Sign(m2.Pos.Z - m1.Pos.Z)
-			ret[i].Vel.Z += z
-			ret[j].Vel.Z -= z
-		}
-	}
-
-	for i, m := range ret {
-		ret[i].Pos = m.Pos.Add(m.Vel)
-	}
-
-	return ret
-}
-
-func (ms Moons) energy() (ret int) {
-	for _, m := range ms {
-		ret += m.energy()
+func (ms *Moons) energy() (ret int) {
+	for i := 0; i < len(ms.X); i++ {
+		pos := vector.XYZ{X: ms.X[i].Pos, Y: ms.Y[i].Pos, Z: ms.Z[i].Pos}
+		vel := vector.XYZ{X: ms.X[i].Vel, Y: ms.Y[i].Vel, Z: ms.Z[i].Vel}
+		ret += pos.SumAbs() * vel.SumAbs()
 	}
 	return
 }
 
-func (m Moon) energy() int {
-	return m.Pos.SumAbs() * m.Vel.SumAbs()
+func (a Axis) step() {
+	for i, m1 := range a {
+		for j, m2 := range a {
+			if i >= j {
+				continue
+			}
+
+			delta := advent2019.Sign(m2.Pos - m1.Pos)
+			a[i].Vel += delta
+			a[j].Vel -= delta
+		}
+	}
+
+	for i, m := range a {
+		a[i].Pos += m.Vel
+	}
 }
 
-func (ms Moons) String() string {
+func (ms *Moons) String() string {
 	var b strings.Builder
-	for _, m := range ms {
-		fmt.Fprintf(&b, "pos=<%v>, vel=<%v>\n", m.Pos, m.Vel)
+	for i := 0; i < len(ms.X); i++ {
+		fmt.Fprintf(&b, "pos=<x=%d, y=%d, z=%d>, vel=<x=%d, y=%d, z=%d>\n",
+			ms.X[i].Pos, ms.Y[i].Pos, ms.Z[i].Pos,
+			ms.X[i].Vel, ms.Y[i].Vel, ms.Z[i].Vel,
+		)
 	}
 	return b.String()
 }
