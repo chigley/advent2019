@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 
 	"github.com/chigley/advent2019"
 )
@@ -31,15 +32,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(reactions.Part1())
+	fmt.Println(reactions.Part1(1))
+	fmt.Println(reactions.Part2(1000000000000))
 }
 
-func (r reactions) Part1() int {
+func (r reactions) Part1(fuel int) int {
 	have := make(store)
-	want := reactionInput{"FUEL", 1}
+	want := reactionInput{"FUEL", fuel}
 
 	ore, _ := r.oreReqd(have, want)
 	return ore
+}
+
+func (r reactions) Part2(ore int) int {
+	return sort.Search(ore+1, func(i int) bool {
+		return r.Part1(i) > ore
+	}) - 1
 }
 
 func (r reactions) oreReqd(have store, want reactionInput) (int, store) {
