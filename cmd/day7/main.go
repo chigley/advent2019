@@ -90,16 +90,13 @@ func feedbackLoopOutputSignal(program, settings []int) (int, error) {
 
 	var wg sync.WaitGroup
 	wg.Add(amplifiers)
-	done := func() {
-		wg.Done()
-	}
 
 	input := initialInput
 	for i := 0; i < amplifiers; i++ {
 		amps[i] = *intcode.New(program)
 
 		tmp := input
-		input = amps[i].RunInteractive(input, done)
+		input = amps[i].RunInteractive(input, wg.Done)
 		tmp <- settings[i]
 	}
 
