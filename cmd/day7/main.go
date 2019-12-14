@@ -86,7 +86,7 @@ func outputSignal(comp *intcode.Computer, settings []int) (int, error) {
 
 func feedbackLoopOutputSignal(program, settings []int) (int, error) {
 	amps := make([]intcode.Computer, amplifiers)
-	initialInput := make(chan int)
+	initialInput := make(chan int, 1)
 
 	var wg sync.WaitGroup
 	wg.Add(amplifiers)
@@ -95,17 +95,16 @@ func feedbackLoopOutputSignal(program, settings []int) (int, error) {
 	for i := 0; i < amplifiers; i++ {
 		amps[i] = *intcode.New(program)
 
-		tmp := input
-		input = amps[i].RunInteractive(input, wg.Done)
-		tmp <- settings[i]
-	}
-
-	// Relay the last amplifier's output into the first.
-	go func() {
-		for out := range input {
-			initialInput <- out
+		if i == amplifiers-1 {
+			amps[i].RunInteractive(input, wg.Done)
+			amps[i].SetOutputs(initialInput)
+			input <- settings[i]
+		} else {
+			tmp := input
+			input = amps[i].RunInteractive(input, wg.Done)
+			tmp <- settings[i]
 		}
-	}()
+	}
 
 	// Pass 0 to the first amplifier.
 	initialInput <- 0
@@ -120,7 +119,6 @@ func feedbackLoopOutputSignal(program, settings []int) (int, error) {
 	// Our result comes from our first amplifier's input channel, which is
 	// equivalent to our last amplifier's output channel.
 	out := <-initialInput
-	close(initialInput)
 
 	return out, nil
 }

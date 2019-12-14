@@ -96,6 +96,11 @@ func (c *Computer) RunInteractive(inputs chan int, done func()) chan int {
 	return c.outputs
 }
 
+func (c *Computer) SetOutputs(outputs chan int) {
+	close(c.outputs)
+	c.outputs = outputs
+}
+
 func (c *Computer) Err() error {
 	if c.err == errHalt {
 		return nil
