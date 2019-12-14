@@ -26,5 +26,11 @@ func TestDay13(t *testing.T) {
 		t.Error(err)
 	}
 
+	part2, err := day13.Part2(program)
+	if err != nil {
+		t.Error(err)
+	}
+
 	assert.Equal(t, 369, part1)
+	assert.Equal(t, 19210, part2)
 }

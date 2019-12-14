@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -32,7 +33,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	part2, err := Part2(program)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println(part1)
+	fmt.Println(part2)
 }
 
 func Part1(program []int) (int, error) {
@@ -54,4 +62,46 @@ func Part1(program []int) (int, error) {
 		}
 	}
 	return blocks, nil
+}
+
+func Part2(program []int) (int, error) {
+	if len(program) == 0 {
+		return 0, errors.New("program too short")
+	}
+	program[0] = 2
+	comp := intcode.New(program)
+
+	inputs := make(chan int)
+	done := make(chan struct{})
+	outputs := comp.RunInteractive(inputs, func() {
+		close(done)
+	})
+
+	var (
+		score   int
+		ballX   int
+		paddleX int
+	)
+
+	for {
+		select {
+		case <-done:
+			close(inputs)
+			return score, comp.Err()
+		case inputs <- advent2019.Sign(ballX - paddleX):
+			// do nothing
+		case x := <-outputs:
+			y, z := <-outputs, <-outputs
+			if x == -1 && y == 0 {
+				score = z
+			} else {
+				switch tile(z) {
+				case tilePaddle:
+					paddleX = x
+				case tileBall:
+					ballX = x
+				}
+			}
+		}
+	}
 }
