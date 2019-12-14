@@ -11,17 +11,17 @@ import (
 
 var regexpReaction = regexp.MustCompile(`^(\d+ [A-Z]+(?:, \d+ [A-Z]+)*) => (\d+ [A-Z]+)$`)
 
-func readReactions(r io.Reader) (reactions, error) {
+func ReadReactions(r io.Reader) (Reactions, error) {
 	input, err := advent2019.ReadStrings(r)
 	if err != nil {
 		return nil, err
 	}
 
-	ret := make(reactions, len(input))
+	ret := make(Reactions, len(input))
 	for _, line := range input {
 		matches := regexpReaction.FindStringSubmatch(line)
 
-		var quantities []reactionInput
+		var quantities []ReactionInput
 		for _, inStmt := range matches[1:] {
 			for _, in := range strings.Split(inStmt, ", ") {
 				q, err := parseQuantity(in)
@@ -33,24 +33,24 @@ func readReactions(r io.Reader) (reactions, error) {
 		}
 
 		ins, out := quantities[:len(quantities)-1], quantities[len(quantities)-1]
-		ret[out.chem] = reaction{
-			ins:  ins,
-			outN: out.n,
+		ret[out.Chem] = Reaction{
+			Ins:  ins,
+			OutN: out.N,
 		}
 	}
 	return ret, nil
 }
 
-func parseQuantity(s string) (reactionInput, error) {
+func parseQuantity(s string) (ReactionInput, error) {
 	var (
-		chem chemical
+		chem Chemical
 		n    int
 	)
 	if _, err := fmt.Sscanf(s, "%d %s", &n, &chem); err != nil {
-		return reactionInput{}, err
+		return ReactionInput{}, err
 	}
-	return reactionInput{
-		chem: chem,
-		n:    n,
+	return ReactionInput{
+		Chem: chem,
+		N:    n,
 	}, nil
 }
