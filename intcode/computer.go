@@ -28,7 +28,7 @@ const (
 	modeRelative
 )
 
-const maxMemory = 2048
+const maxMemory = 4096
 
 var errHalt = errors.New("intcode: halt")
 
