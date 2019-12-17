@@ -83,6 +83,10 @@ func (d *Droid) bfs(wantOxygen bool) (int, error) {
 					candidatePath.PushBack(dir)
 
 					q.PushBack(candidatePath)
+
+					// Explicitly set the position as unexplored so we don't
+					// queue multiple paths to the same tile.
+					d.tiles[candidatePos] = unexplored
 				}
 			}
 		}
