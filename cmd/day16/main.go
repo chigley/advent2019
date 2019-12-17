@@ -21,7 +21,12 @@ func main() {
 		log.Fatal("expected one input line")
 	}
 
-	part1, err := Part1(input[0])
+	digits, err := ParseDigits(input[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	part1, err := Part1(digits)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,12 +34,8 @@ func main() {
 	fmt.Println(part1)
 }
 
-func Part1(input string) (string, error) {
-	digits, err := parseDigits(input)
-	if err != nil {
-		return "", err
-	}
-	return first8(phaseN(digits, 100))
+func Part1(input []int) (string, error) {
+	return first8(phaseN(input, 100))
 }
 
 func phaseN(input []int, n int) []int {
@@ -56,7 +57,7 @@ func phase(input []int) []int {
 	return output
 }
 
-func parseDigits(input string) ([]int, error) {
+func ParseDigits(input string) ([]int, error) {
 	digits := make([]int, len(input))
 	for i := 0; i < len(input); i++ {
 		digit, err := strconv.Atoi(string(input[i]))

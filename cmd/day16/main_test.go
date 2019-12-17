@@ -31,7 +31,12 @@ func TestDay16(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	part1, err := day16.Part1(inputLines[0])
+	digits, err := day16.ParseDigits(inputLines[0])
+	if err != nil {
+		t.Error(err)
+	}
+
+	part1, err := day16.Part1(digits)
 	if err != nil {
 		t.Error(err)
 	}
@@ -40,7 +45,12 @@ func TestDay16(t *testing.T) {
 
 func TestPart1(t *testing.T) {
 	for _, tt := range part1Tests {
-		output, err := day16.Part1(tt.input)
+		digits, err := day16.ParseDigits(tt.input)
+		if err != nil {
+			t.Error(err)
+		}
+
+		output, err := day16.Part1(digits)
 		if err != nil {
 			t.Error(err)
 		}
