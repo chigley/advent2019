@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/chigley/advent2019"
 	"github.com/chigley/advent2019/intcode"
@@ -13,6 +14,8 @@ import (
 type Drone struct {
 	cache map[vector.XY]bool
 	comp  *intcode.Computer
+	maxX  int
+	maxY  int
 }
 
 func main() {
@@ -56,6 +59,27 @@ func (d *Drone) Part1() (int, error) {
 	return count, nil
 }
 
+func (d *Drone) String() string {
+	var b strings.Builder
+	for x := 0; x <= d.maxX; x++ {
+		for y := 0; y <= d.maxY; y++ {
+			isPulled, ok := d.cache[vector.XY{x, y}]
+			if ok {
+				switch isPulled {
+				case true:
+					b.WriteRune('#')
+				default:
+					b.WriteRune('.')
+				}
+			} else {
+				b.WriteRune('?')
+			}
+		}
+		b.WriteRune('\n')
+	}
+	return b.String()
+}
+
 func (d *Drone) readPos(pos vector.XY) (bool, error) {
 	if res, ok := d.cache[pos]; ok {
 		return res, nil
@@ -68,6 +92,9 @@ func (d *Drone) readPos(pos vector.XY) (bool, error) {
 	if len(out) != 1 {
 		return false, fmt.Errorf("expected 1 output, got %d", len(out))
 	}
+
+	d.maxX = advent2019.Max(d.maxX, pos.X)
+	d.maxY = advent2019.Max(d.maxY, pos.Y)
 
 	res := out[0] == 1
 	d.cache[pos] = res
