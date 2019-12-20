@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -31,16 +32,47 @@ func main() {
 		log.Fatal(err)
 	}
 
+	part2, err := Part2(input[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println(part1)
+	fmt.Println(part2)
 }
 
 func Part1(input []int) (string, error) {
-	return first8(phaseN(input, 100))
+	return first8(phaseN(input, phase, 100))
 }
 
-func phaseN(input []int, n int) []int {
+func Part2(input string) (string, error) {
+	offset, err := strconv.Atoi(input[:7])
+	if err != nil {
+		return "", err
+	}
+
+	repeatedInputLen := len(input) * 10000
+	if offset < (repeatedInputLen+1)/2 {
+		return "", errors.New("offset too low for our optimisation to work")
+	}
+
+	input = strings.Repeat(input, 10000)
+
+	// Optimisation one: each digit does not depend on any digits before it. We
+	// can throw away everything before the offset without affecting our result
+	input = input[offset:]
+
+	digits, err := ParseDigits(input)
+	if err != nil {
+		return "", err
+	}
+
+	return first8(phaseN(digits, phaseOptimised, 100))
+}
+
+func phaseN(input []int, f func([]int) []int, n int) []int {
 	for i := 0; i < n; i++ {
-		input = phase(input)
+		input = f(input)
 	}
 	return input
 }
@@ -53,6 +85,24 @@ func phase(input []int) []int {
 			sum += digit * basePattern[((j+1)/(i+1))%len(basePattern)]
 		}
 		output[i] = advent2019.Abs(sum % 10)
+	}
+	return output
+}
+
+// Optimisation two: from the middle of the overall input (_not_ the input to
+// this function) onwards, the next value of a given digit can be derived as its
+// current value plus the new values of all subsequent digits.
+//
+// This only makes sense if the overall input string has been truncated at the
+// midpoint or later.
+func phaseOptimised(input []int) []int {
+	output := make([]int, len(input))
+	for i := len(output) - 1; i >= 0; i-- {
+		if i == len(output)-1 {
+			output[i] = input[i]
+			continue
+		}
+		output[i] = (input[i] + output[i+1]) % 10
 	}
 	return output
 }
