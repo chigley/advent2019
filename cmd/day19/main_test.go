@@ -21,7 +21,9 @@ func TestDay19(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	part1, err := day19.Part1(program)
+	drone := day19.NewDrone(program)
+
+	part1, err := drone.Part1()
 	if err != nil {
 		t.Error(err)
 	}
