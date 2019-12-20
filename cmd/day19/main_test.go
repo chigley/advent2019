@@ -6,6 +6,7 @@ import (
 
 	"github.com/chigley/advent2019"
 	day19 "github.com/chigley/advent2019/cmd/day19"
+	"github.com/chigley/advent2019/vector"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,5 +29,11 @@ func TestDay19(t *testing.T) {
 		t.Error(err)
 	}
 
+	part2, err := drone.Part2()
+	if err != nil {
+		t.Error(err)
+	}
+
 	assert.Equal(t, 186, part1)
+	assert.Equal(t, vector.XY{923, 1141}, part2)
 }

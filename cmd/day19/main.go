@@ -31,9 +31,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(drone)
+	part2, err := drone.Part2()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println(part1)
+	fmt.Println(part2.X*10000 + part2.Y)
 }
 
 func NewDrone(program []int) *Drone {
@@ -57,6 +61,37 @@ func (d *Drone) Part1() (int, error) {
 		}
 	}
 	return count, nil
+}
+
+func (d *Drone) Part2() (vector.XY, error) {
+	// We'll keep moving a candidate 100x100 window whose bottom left corner is
+	// represented by pos
+	pos := vector.XY{0, 99}
+
+	for {
+		// Keep shifting the window right until the bottom left corner hits
+		isPulled, err := d.readPos(pos)
+		if err != nil {
+			return vector.XY{}, nil
+		}
+		if !isPulled {
+			pos.X++
+			continue
+		}
+
+		// Try the top right corner. If it hits, we've found our answer. If it
+		// doesn't, shift the window down one and try again
+		isPulled, err = d.readPos(vector.XY{pos.X + 99, pos.Y - 99})
+		if err != nil {
+			return vector.XY{}, nil
+		}
+		if isPulled {
+			// Return the top left corner (bearing in mind that pos is the
+			// bottom left corner)
+			return vector.XY{pos.X, pos.Y - 99}, nil
+		}
+		pos.Y++
+	}
 }
 
 func (d *Drone) String() string {
