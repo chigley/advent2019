@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 
 	"github.com/chigley/advent2019"
 	"github.com/chigley/advent2019/vector"
@@ -11,7 +12,7 @@ import (
 
 type Maze struct {
 	tiles   map[vector.XY]tile
-	portals map[vector.XY]vector.XY
+	portals map[vector.XY]portalDest
 	aa      vector.XY
 	zz      vector.XY
 }
@@ -24,6 +25,18 @@ const (
 	portal
 )
 
+type portalDest struct {
+	pos        vector.XY
+	levelDelta int
+}
+
+type edges struct {
+	minX int
+	minY int
+	maxX int
+	maxY int
+}
+
 func NewMaze(r io.Reader) (*Maze, error) {
 	lines, err := advent2019.ReadStrings(r)
 	if err != nil {
@@ -32,8 +45,12 @@ func NewMaze(r io.Reader) (*Maze, error) {
 
 	maze := &Maze{
 		tiles:   make(map[vector.XY]tile),
-		portals: make(map[vector.XY]vector.XY),
+		portals: make(map[vector.XY]portalDest),
 	}
+
+	// Keep track of extreme edges, to allow us to distinguish internal portals
+	// from external ones
+	edges := newEdges()
 
 	for y, line := range lines {
 		for x, char := range line {
@@ -46,7 +63,9 @@ func NewMaze(r io.Reader) (*Maze, error) {
 			default:
 				continue
 			}
-			maze.tiles[vector.XY{x, y}] = tile
+			pos := vector.XY{x, y}
+			maze.tiles[pos] = tile
+			edges.update(pos)
 		}
 	}
 
@@ -115,9 +134,39 @@ func NewMaze(r io.Reader) (*Maze, error) {
 		if len(points) != 2 {
 			return nil, fmt.Errorf("portal %s has %d points, expected 2", label, len(points))
 		}
-		maze.portals[points[0].entryPoint] = points[1].accessedFrom
-		maze.portals[points[1].entryPoint] = points[0].accessedFrom
+
+		maze.portals[points[0].entryPoint] = portalDest{
+			pos:        points[1].accessedFrom,
+			levelDelta: edges.levelDelta(points[0].accessedFrom),
+		}
+		maze.portals[points[1].entryPoint] = portalDest{
+			pos:        points[0].accessedFrom,
+			levelDelta: edges.levelDelta(points[1].accessedFrom),
+		}
 	}
 
 	return maze, nil
+}
+
+func newEdges() *edges {
+	return &edges{
+		minX: math.MaxInt64,
+		minY: math.MaxInt64,
+		maxX: math.MinInt64,
+		maxY: math.MinInt64,
+	}
+}
+
+func (e *edges) update(pos vector.XY) {
+	e.minY = advent2019.Min(e.minY, pos.Y)
+	e.maxY = advent2019.Max(e.maxY, pos.Y)
+	e.minX = advent2019.Min(e.minX, pos.X)
+	e.maxX = advent2019.Max(e.maxX, pos.X)
+}
+
+func (e *edges) levelDelta(pos vector.XY) int {
+	if pos.X == e.minX || pos.X == e.maxX || pos.Y == e.minY || pos.Y == e.maxY {
+		return -1
+	}
+	return 1
 }
