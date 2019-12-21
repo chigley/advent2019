@@ -4,6 +4,15 @@ import (
 	"github.com/chigley/advent2019"
 )
 
+var (
+	North = XY{0, 1}
+	East  = XY{1, 0}
+	South = XY{0, -1}
+	West  = XY{-1, 0}
+
+	Dirs = [4]XY{North, East, South, West}
+)
+
 type XY struct {
 	X, Y int
 }
@@ -32,15 +41,8 @@ func (p1 *XY) Distance(p2 XY) int {
 }
 
 func (p *XY) Neighbours() [4]XY {
-	dirs := []XY{
-		{0, 1},
-		{1, 0},
-		{0, -1},
-		{-1, 0},
-	}
-
 	var ret [4]XY
-	for i, dir := range dirs {
+	for i, dir := range Dirs {
 		ret[i] = p.Add(dir)
 	}
 	return ret
