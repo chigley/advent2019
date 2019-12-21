@@ -1,8 +1,6 @@
 package main
 
 import (
-	"container/list"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,6 +18,7 @@ type Maze struct {
 }
 
 type node struct {
+	maze *Maze
 	pos  vector.XY
 	keys keyMask
 }
@@ -62,72 +61,51 @@ func NewMaze(r io.Reader) (*Maze, error) {
 	return m, nil
 }
 
-func (m Maze) Part1() (int, error) {
-	startNode := node{
-		pos: m.entrance,
-	}
+func (m *Maze) Part1() (int, error) {
+	return advent2019.BFS(&node{
+		maze: m,
+		pos:  m.entrance,
+	})
+}
 
-	q := list.New()
-	q.PushBack(startNode)
+func (n *node) IsGoal() bool {
+	return n.keys.haveAll(n.maze.numKeys)
+}
 
-	discovered := map[node]struct{}{
-		startNode: {},
-	}
-	steps := make(map[vector.XY]int)
+func (n *node) Neighbours() ([]advent2019.BFSNode, error) {
+	ret := make([]advent2019.BFSNode, 0, 4)
+	for _, pos := range n.pos.Neighbours() {
+		keys := n.keys
 
-	for e := q.Front(); e != nil; e = e.Next() {
-		node := e.Value.(node)
-
-		char, ok := m.tiles[node.pos]
+		char, ok := n.maze.tiles[pos]
 		if !ok || char == '#' {
 			continue
 		}
 		if unicode.IsUpper(char) {
-			if !node.keys.haveKey(char) {
+			if !n.keys.haveKey(char) {
 				continue
 			}
 		} else if unicode.IsLower(char) {
-			node.keys.collectKey(char)
-			if node.keys.haveAll(m.numKeys) {
-				return steps[node.pos], nil
-			}
+			keys = keys.collectKey(char)
 		} else if char != '@' && char != '.' {
-			return 0, fmt.Errorf("unrecognised character %q", char)
+			return nil, fmt.Errorf("unrecognised character %q", char)
 		}
 
-		nodeSteps := steps[node.pos]
-		for _, neighbour := range node.neighbours() {
-			if _, ok := discovered[neighbour]; !ok {
-				discovered[neighbour] = struct{}{}
-				steps[neighbour.pos] = nodeSteps + 1
-				q.PushBack(neighbour)
-			}
-		}
+		ret = append(ret, &node{
+			maze: n.maze,
+			pos:  pos,
+			keys: keys,
+		})
 	}
-
-	return 0, errors.New("no solution found")
+	return ret, nil
 }
 
-func (n *node) neighbours() []node {
-	ret := make([]node, 0, 4)
-	for x := -1; x <= 1; x++ {
-		for y := -1; y <= 1; y++ {
-			if x == 0 && y == 0 {
-				// same point
-				continue
-			}
-
-			if advent2019.Abs(x) == 1 && advent2019.Abs(y) == 1 {
-				// diagonal
-				continue
-			}
-
-			pos := vector.XY{n.pos.X + x, n.pos.Y + y}
-			ret = append(ret, node{
-				pos:  pos,
-				keys: n.keys,
-			})
-		}
+func (n *node) Key() interface{} {
+	return struct {
+		vector.XY
+		keyMask
+	}{
+		n.pos,
+		n.keys,
 	}
-	return ret
 }

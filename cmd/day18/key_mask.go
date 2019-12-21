@@ -6,8 +6,8 @@ import (
 
 type keyMask int
 
-func (m *keyMask) collectKey(k rune) {
-	*m |= 1 << keyIndex(k)
+func (m keyMask) collectKey(k rune) keyMask {
+	return m | 1<<keyIndex(k)
 }
 
 func (m keyMask) haveKey(k rune) bool {
