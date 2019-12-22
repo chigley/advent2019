@@ -23,7 +23,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	part2, err := Part2(comp)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println(part1)
+	fmt.Println(part2)
 }
 
 func Part1(comp *intcode.Computer) (int, error) {
@@ -37,6 +43,24 @@ AND C T
 NOT T J
 AND D J
 WALK
+`
+	return attempt(comp, script)
+}
+
+func Part2(comp *intcode.Computer) (int, error) {
+	// Jump if the part 1 condition is true and we will also be able to safely
+	// walk or jump from where we land.
+	//
+	// !(A && B && C) && D && (E || H)
+	script := `OR A T
+AND B T
+AND C T
+NOT T T
+AND D T
+OR E J
+OR H J
+AND T J
+RUN
 `
 	return attempt(comp, script)
 }

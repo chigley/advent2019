@@ -28,5 +28,11 @@ func TestDay19(t *testing.T) {
 		t.Error(err)
 	}
 
+	part2, err := day21.Part2(comp)
+	if err != nil {
+		t.Error(err)
+	}
+
 	assert.Equal(t, 19349939, part1)
+	assert.Equal(t, 1142412777, part2)
 }
