@@ -101,13 +101,7 @@ func Part2(program []int) (int, error) {
 		routineC,
 		"n",
 	)
-
-	inputs := make([]int, len(inputStr))
-	for i, char := range inputStr {
-		inputs[i] = int(char)
-	}
-
-	outputs, err := intcode.New(program).Run(inputs)
+	outputs, err := intcode.New(program).Run(intcode.ToASCII(inputStr))
 	if err != nil {
 		return 0, err
 	}
@@ -122,12 +116,7 @@ func ReadView(program []int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	var b strings.Builder
-	for _, out := range outputs {
-		b.WriteRune(rune(out))
-	}
-	return b.String(), nil
+	return intcode.FromASCII(outputs), nil
 }
 
 func genMap(view string) ([][]tile, error) {
