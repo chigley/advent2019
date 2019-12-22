@@ -18,9 +18,10 @@ type Maze struct {
 }
 
 type node struct {
-	maze *Maze
-	pos  vector.XY
-	keys keyMask
+	maze        *Maze
+	positions   [1]vector.XY
+	activeRobot int
+	keys        keyMask
 }
 
 func main() {
@@ -63,8 +64,9 @@ func NewMaze(r io.Reader) (*Maze, error) {
 
 func (m *Maze) Part1() (int, error) {
 	return advent2019.BFS(&node{
-		maze: m,
-		pos:  m.entrance,
+		maze:        m,
+		positions:   [1]vector.XY{m.entrance},
+		activeRobot: -1,
 	})
 }
 
@@ -73,8 +75,21 @@ func (n *node) IsGoal() bool {
 }
 
 func (n *node) Neighbours() ([]advent2019.BFSNode, error) {
+	if n.activeRobot == -1 {
+		ret := make([]advent2019.BFSNode, len(n.positions))
+		for i := 0; i < len(n.positions); i++ {
+			ret[i] = &node{
+				maze:        n.maze,
+				positions:   n.positions,
+				activeRobot: i,
+				keys:        n.keys,
+			}
+		}
+		return ret, nil
+	}
+
 	ret := make([]advent2019.BFSNode, 0, 4)
-	for _, pos := range n.pos.Neighbours() {
+	for _, pos := range n.positions[n.activeRobot].Neighbours() {
 		keys := n.keys
 
 		char, ok := n.maze.tiles[pos]
@@ -91,10 +106,12 @@ func (n *node) Neighbours() ([]advent2019.BFSNode, error) {
 			return nil, fmt.Errorf("unrecognised character %q", char)
 		}
 
+		n.positions[n.activeRobot] = pos
+
 		ret = append(ret, &node{
-			maze: n.maze,
-			pos:  pos,
-			keys: keys,
+			maze:      n.maze,
+			positions: n.positions,
+			keys:      keys,
 		})
 	}
 	return ret, nil
@@ -102,10 +119,12 @@ func (n *node) Neighbours() ([]advent2019.BFSNode, error) {
 
 func (n *node) Key() interface{} {
 	return struct {
-		vector.XY
+		positions [1]vector.XY
+		int
 		keyMask
 	}{
-		n.pos,
+		n.positions,
+		n.activeRobot,
 		n.keys,
 	}
 }
