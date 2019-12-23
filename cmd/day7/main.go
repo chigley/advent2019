@@ -96,8 +96,7 @@ func feedbackLoopOutputSignal(program, settings []int) (int, error) {
 		amps[i] = *intcode.New(program)
 
 		if i == amplifiers-1 {
-			amps[i].RunInteractive(input, wg.Done)
-			amps[i].SetOutputs(initialInput)
+			amps[i].RunInteractive(input, wg.Done, intcode.Outputs(initialInput))
 			input <- settings[i]
 		} else {
 			tmp := input

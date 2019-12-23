@@ -41,7 +41,17 @@ type Computer struct {
 	inputs       <-chan int
 	outputs      chan int
 	err          error
+
+	nonBlockingInputPairs bool
+	haveFirst             bool
 }
+
+type InteractiveCfg struct {
+	outputs               chan int
+	nonBlockingInputPairs bool
+}
+
+type InteractiveOpt func(cfg *InteractiveCfg)
 
 func New(program []int) *Computer {
 	return &Computer{
@@ -70,14 +80,28 @@ func (c *Computer) Run(inputs []int) ([]int, error) {
 	return outputs, nil
 }
 
-func (c *Computer) RunInteractive(inputs chan int, done func()) chan int {
+func (c *Computer) RunInteractive(inputs chan int, done func(), opts ...InteractiveOpt) chan int {
+	cfg := InteractiveCfg{
+		outputs:               make(chan int),
+		nonBlockingInputPairs: false,
+	}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
 	c.memory = make([]int, maxMemory)
 	copy(c.memory, c.program)
 
 	c.pc = 0
 	c.relativeBase = 0
 	c.inputs = inputs
-	c.outputs = make(chan int)
+	c.outputs = cfg.outputs
+
+	// Set have first to true if using this mode, on the assumption that each
+	// computer will first receive some sort of identifier instruction before
+	// receiving its pairs.
+	c.nonBlockingInputPairs = cfg.nonBlockingInputPairs
+	c.haveFirst = cfg.nonBlockingInputPairs
 
 	go func() {
 		for {
@@ -96,16 +120,24 @@ func (c *Computer) RunInteractive(inputs chan int, done func()) chan int {
 	return c.outputs
 }
 
-func (c *Computer) SetOutputs(outputs chan int) {
-	close(c.outputs)
-	c.outputs = outputs
-}
-
 func (c *Computer) Err() error {
 	if c.err == errHalt {
 		return nil
 	}
 	return c.err
+}
+
+func Outputs(outputs chan int) InteractiveOpt {
+	return func(cfg *InteractiveCfg) {
+		close(cfg.outputs)
+		cfg.outputs = outputs
+	}
+}
+
+func NonBlockingInputPairs() InteractiveOpt {
+	return func(cfg *InteractiveCfg) {
+		cfg.nonBlockingInputPairs = true
+	}
 }
 
 func (c *Computer) runOp() error {
@@ -253,7 +285,18 @@ func (c *Computer) unaryOp(op opCode, modes []paramMode) error {
 
 	switch op {
 	case opInput:
-		return c.writeArg(modes[0], <-c.inputs)
+		if c.nonBlockingInputPairs && !c.haveFirst {
+			select {
+			case input := <-c.inputs:
+				c.haveFirst = true
+				return c.writeArg(modes[0], input)
+			default:
+				return c.writeArg(modes[0], -1)
+			}
+		} else {
+			c.haveFirst = false
+			return c.writeArg(modes[0], <-c.inputs)
+		}
 	case opOutput:
 		arg, err := c.readArg(modes[0])
 		if err != nil {
