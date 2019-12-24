@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/chigley/advent2019"
 	"github.com/chigley/advent2019/intcode"
@@ -32,6 +34,34 @@ func Part1(program []int) int {
 		packets[i] = make(chan packet, queueSize)
 	}
 
+	var (
+		natPacket packet
+		natMutex  sync.RWMutex
+	)
+	go func() {
+		ySeen := make(map[int]struct{})
+
+		for {
+			time.Sleep(1 * time.Second)
+			for i := 0; i < interfaces; i++ {
+				if len(packets[i]) > 0 {
+					continue
+				}
+			}
+
+			// idle
+			natMutex.RLock()
+			packetToSend := natPacket
+			natMutex.RUnlock()
+			if _, ok := ySeen[packetToSend.Y]; ok {
+				log.Fatal(packetToSend.Y)
+			}
+			ySeen[packetToSend.Y] = struct{}{}
+			log.Printf("Sending NAT packet with %#v", packetToSend)
+			packets[0] <- packetToSend
+		}
+	}()
+
 	ret := make(chan int)
 	for i := 0; i < interfaces; i++ {
 		inputs := make(chan int)
@@ -49,11 +79,13 @@ func Part1(program []int) int {
 		// Pass packets we send onto the destination machine's queue
 		go func() {
 			for dest := range out {
-				x, y := <-out, <-out
+				packet := packet{<-out, <-out}
 				if 0 <= dest && dest < interfaces {
-					packets[dest] <- packet{x, y}
+					packets[dest] <- packet
 				} else if dest == 255 {
-					ret <- y
+					natMutex.Lock()
+					natPacket = packet
+					natMutex.Unlock()
 				}
 			}
 		}()
